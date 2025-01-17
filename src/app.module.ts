@@ -9,12 +9,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
-import { BookModule } from './book/book.module';
-import { ArticleModule } from './article/article.module';
+import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
+import { BookModule } from './modules/book/book.module';
+import { ArticleModule } from './modules/article/article.module';
 import { HealthController } from './health/health.controller';
-import { RoleModule } from './role/role.module';
+import { RoleModule } from './modules/role/role.module';
 
 @Module({
   imports: [

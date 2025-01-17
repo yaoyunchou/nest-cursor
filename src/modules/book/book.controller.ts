@@ -20,12 +20,17 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles, UserRole } from '../auth/roles.decorator';
+
 import { FileInterceptor } from '@nestjs/platform-express';
-import { imageUploadConfig } from '../core/interceptors/file-upload.interceptor';
+import { imageUploadConfig } from '@/core/interceptors/file-upload.interceptor';
 import { CreateBookDto } from './dto/create-book.dto';
 import { BookService } from './book.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+// ... existing code ...
+import { Roles, UserRole } from '../auth/roles.decorator';
+
+@ApiTags('图书管理')
+// ... rest of the code ...
 
 @ApiTags('图书管理')
 @ApiBearerAuth()

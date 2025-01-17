@@ -8,7 +8,7 @@
  */
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { UserRole } from '../auth/roles.decorator';
+import { Role } from '../role/role.entity';
 
 @Entity()
 export class User {
@@ -24,7 +24,7 @@ export class User {
   @Column()
   password: string;
 
-  @ApiProperty({ description: '用户角色', enum: UserRole, isArray: true })
+  @ApiProperty({ description: '用户角色', enum: Role, isArray: true })
   @Column('simple-array')
-  roles: UserRole[];
+  roles: Role[];
 } 

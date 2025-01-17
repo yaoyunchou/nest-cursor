@@ -1,99 +1,124 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Modern api
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+这是一个cms系统的后台， 使用nestjs 和 typeorm 开发, 使用swagger 进行接口文档管理.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 代码风格
 
-## Description
+- 使用驼峰命名法，代码使用英文完成， 注释使用中文完成。
+- 使用eslint 进行代码检查， 使用prettier 进行代码格式化。
+- 使用swagger 进行接口文档管理。
+- 使用jest 进行单元测试。
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## API功能
 
-## Project setup
+项目是分模块开发的， 每个模块都有自己的controller, service, entity, dto, interface, module, test。和对应的单元测试。 可以参考src/user 目录下的文件，做新的模块开发。
 
-```bash
-$ yarn install
-```
+- 用户管理
+  - 用户列表
+    - 分页
+    - 排序
+    - 筛选， 可以让用户自己定义筛选条件
+  - 用户详情
+    - 用户信息
+  - 用户创建
+    - 用户名称
+    - 用户邮箱
+    - 用户密码
+    - 用户角色
+    - 用户状态
+    - 用户头像（需要调用文件上传接口）
+    - 用户备注
+    - 用户角色， 一个用户有多个角色， 一个角色有多个用户
+  - 用户更新
+  - 用户删除
+- 角色管理
+  - 角色列表
+  - 角色详情
+  - 角色创建
+  - 角色更新
+  - 角色删除
+- 权限管理
+  - 权限列表
+  - 权限详情
+  - 权限创建
+    - 权限名称
+    - 权限描述
+    - 权限类型
+    - 权限状态
+    - 权限码
+  - 权限更新
+  - 权限删除
+- 菜单管理
+- 日志管理
+- 文件管理
 
-## Compile and run the project
+- 系统配置
 
-```bash
-# development
-$ yarn run start
+## 项目结构
 
-# watch mode
-$ yarn run start:dev
+src/
+├── config/                     # 配置文件目录
+│   ├── database.config.ts
+│   └── jwt.config.ts
+├── common/                     # 通用模块目录
+│   ├── decorators/            # 自定义装饰器
+│   ├── filters/               # 异常过滤器
+│   ├── guards/                # 守卫
+│   ├── interceptors/          # 拦截器
+│   ├── middleware/            # 中间件
+│   └── pipes/                 # 管道
+├── modules/                    # 业务模块目录
+│   ├── auth/                  # 认证模块
+│   │   ├── dto/
+│   │   ├── entities/
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── auth.module.ts
+│   │   └── auth.spec.ts
+│   ├── user/                  # 用户模块
+│   │   ├── dto/
+│   │   ├── entities/
+│   │   ├── user.controller.ts
+│   │   ├── user.service.ts
+│   │   ├── user.module.ts
+│   │   └── user.spec.ts
+│   └── role/                  # 角色模块
+│       ├── dto/
+│       ├── entities/
+│       ├── role.controller.ts
+│       ├── role.service.ts
+│       ├── role.module.ts
+│       └── role.spec.ts
+├── shared/                    # 共享资源目录
+│   ├── constants/            # 常量定义
+│   ├── interfaces/          # 接口定义
+│   └── utils/               # 工具函数
+├── app.module.ts             # 根模块
+├── app.controller.ts         # 根控制器
+├── app.service.ts           # 根服务
+└── main.ts                  # 应用入口文件
 
-# production mode
-$ yarn run start:prod
-```
+test/                        # 测试目录
+├── e2e/                    # 端到端测试
+└── unit/                   # 单元测试
 
-## Run tests
+├── .env                    # 环境变量
+├── .env.development       # 开发环境变量
+├── .env.production        # 生产环境变量
+├── .gitignore
+├── nest-cli.json
+├── package.json
+├── README.md
+├── tsconfig.json
+└── tsconfig.build.json
 
-```bash
-# unit tests
-$ yarn run test
+## 技术栈
 
-# e2e tests
-$ yarn run test:e2e
+- nestjs
+- typeorm
+- swagger
+- mysql
+- jwt
+- bcrypt
+- multer
 
-# test coverage
-$ yarn run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ yarn install -g mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

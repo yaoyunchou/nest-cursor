@@ -37,7 +37,7 @@ export class AuthService {
     };
   }
 
-  async register(registerDto: RegisterDto) {
+  async register(registerDto: CreateUserDto) {
     const existingUser = await this.userService.findByUsername(registerDto.username);
     if (existingUser) {
       throw new ConflictException('用户名已存在');

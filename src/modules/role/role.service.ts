@@ -18,4 +18,12 @@ export class RoleService {
     const role = this.roleRepository.create(roleData);
     return await this.roleRepository.save(role);
   }
+
+  async findUserRoles(userId: number): Promise<Role[]> {
+    return this.roleRepository
+      .createQueryBuilder('role')
+      .innerJoin('role.users', 'user')
+      .where('user.id = :userId', { userId })
+      .getMany();
+  }
 } 
