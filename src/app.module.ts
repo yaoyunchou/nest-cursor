@@ -15,6 +15,7 @@ import { BookModule } from './modules/book/book.module';
 import { ArticleModule } from './modules/article/article.module';
 import { HealthController } from './health/health.controller';
 import { RoleModule } from './modules/role/role.module';
+import { FileModule } from './modules/file/file.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RoleModule } from './modules/role/role.module';
     BookModule,
     ArticleModule,
     RoleModule,
+    FileModule,
   ],
   controllers: [HealthController],
 })
