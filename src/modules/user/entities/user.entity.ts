@@ -19,7 +19,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Role } from '../../role/role.entity'
 
 
-@Entity('users')
+@Entity('user')
 export class User {
   @ApiProperty({ description: '用户ID' })
   @PrimaryGeneratedColumn()

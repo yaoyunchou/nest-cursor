@@ -11,6 +11,8 @@ import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
 import { LoggerMiddleware } from './core/middleware/logger.middleware';
+import { TransformInterceptor } from './core/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 
 declare const module: any;
 
@@ -19,6 +21,10 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   
   app.setGlobalPrefix('api/v1');
+  
+  app.useGlobalInterceptors(new TransformInterceptor());
+  // 配置全局过滤器
+  app.useGlobalFilters(new HttpExceptionFilter());
   
   app.use(LoggerMiddleware);
   

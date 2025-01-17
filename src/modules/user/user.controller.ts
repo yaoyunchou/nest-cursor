@@ -32,7 +32,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 @ApiTags('用户管理')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Controller('users')
+@Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -53,7 +53,7 @@ export class UserController {
     description: '用户列表响应' 
   })
   @Roles(UserRole.ADMIN, UserRole.USER)
-  @Get()
+  @Get('list')
   async findAll(@Query() query: QueryUserDto): Promise<PaginatedResponse<User>> {
     return this.userService.findAll(query);
   }
