@@ -31,7 +31,7 @@ import { PaginatedResponse } from '../../shared/interfaces/pagination.interface'
 @ApiTags('文件管理')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('files')
+@Controller('file')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
@@ -44,11 +44,12 @@ export class FileController {
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
   ): Promise<File> {
-    return this.fileService.upload(file, req.user.id);
+    // 获取用户id
+    return this.fileService.upload(file, req.user.userId);
   }
 
   @ApiOperation({ summary: '获取文件列表' })
-  @Get()
+  @Get('list')
   async findAll(@Query() query: QueryFileDto): Promise<PaginatedResponse<File>> {
     return this.fileService.findAll(query);
   }

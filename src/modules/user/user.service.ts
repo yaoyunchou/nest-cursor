@@ -40,7 +40,14 @@ export class UserService {
     } = query;
     
     const queryBuilder = this.userRepository.createQueryBuilder('user')
-      .leftJoinAndSelect('user.roles', 'role');
+      .select([
+        'user.id',
+        'user.username',
+        'user.email',
+        'user.status',
+        'user.createdAt',
+      ])
+      .leftJoinAndSelect('user.roles', 'role')
 
     if (username) {
       queryBuilder.andWhere('user.username LIKE :username', { username: `%${username}%` });

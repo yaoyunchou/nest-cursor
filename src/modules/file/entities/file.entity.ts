@@ -18,7 +18,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../user/entities/user.entity';
 
-@Entity('files')
+@Entity('file')
 export class File {
   @ApiProperty({ description: '文件ID' })
   @PrimaryGeneratedColumn()
