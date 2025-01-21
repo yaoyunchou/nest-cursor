@@ -31,7 +31,7 @@ export class TargetController {
    * 获取所有目标
    * @returns 目标列表
    */
-  @Get()
+  @Get('list')
   @ApiOperation({ summary: '获取所有目标' })
   findAll() {
     return this.targetService.findAll();

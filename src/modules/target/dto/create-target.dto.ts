@@ -10,10 +10,6 @@ export class CreateTargetDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ description: '目标类型' })
-  @IsString()
-  type: string;
-
   @ApiProperty({ description: '目标计划完成时间（小时）' })
   @IsNumber()
   plannedHours: number;

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { Target } from './entities/target.entity';
 import { Task } from './entities/task.entity';
 import { CreateTargetDto } from './dto/create-target.dto';
@@ -30,10 +30,36 @@ export class TargetService {
    * 获取所有目标列表
    * @returns 目标列表，包含关联的任务
    */
-  async findAll(): Promise<Target[]> {
-    return await this.targetRepository.find({
+  async findAll(query: {pageSize?: number, pageIndex?: number, name?: string, status?: string}): Promise<{list: Target[], total: number, pageSize: number, pageIndex: number}> {
+    /**
+     * 列表需要返回total, pagesize, pageIndex, 参数可能会传入pageSize, pageIndex
+     * 1. 如果传入pageSize, pageIndex,则使用传入的， 没有则默认pageSize:10, pageIndex:1
+     * 2. 会根据name 进行模糊查询
+     * 3. 会根据status 进行查询
+     * 
+     *  */ 
+
+    const {pageSize = 10, pageIndex = 1, name, status} = query; 
+    const where: FindOptionsWhere<Target> = {};
+    if (name) {
+      where.name = Like(`%${name}%`);
+    }
+    if (status) {
+      where.status = status;
+    }
+
+    const [targets, total] = await this.targetRepository.findAndCount({
+      where,
       relations: ['tasks'],
+      skip: (pageIndex - 1) * pageSize,
+      take: pageSize,
     });
+    return {
+      list:targets,
+      total,
+      pageSize: 10,
+      pageIndex: 1,
+    };
   }
 
   /**
@@ -112,9 +138,9 @@ export class TargetService {
    * @param updateTaskDto - 任务更新数据
    * @returns 更新的任务实体
    */
-  async updateTask(targetId: number, taskId: number, updateTargetTaskDto: UpdateTargetTaskDto): Promise<Task> {
+  async updateTask(targetId: number, taskId: number, updateTaskDto: UpdateTargetTaskDto): Promise<Task> {
     const task = await this.findOneTask(targetId, taskId);
-    return await this.taskRepository.save({ ...task, ...updateTargetTaskDto });
+    return await this.taskRepository.save({ ...task, ...updateTaskDto });
   }
 
   /**

@@ -26,9 +26,6 @@ export class Target {
   })
   status: string;
 
-  // 目标类型，如：开发任务、学习任务等
-  @Column()
-  type: string;
 
   // 目标计划完成时间（小时）
   @Column('float')
