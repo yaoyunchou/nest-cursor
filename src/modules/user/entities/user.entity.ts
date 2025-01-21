@@ -49,6 +49,11 @@ export class User {
   @Column({ nullable: true })
   remark: string;
 
+  
+  @ApiProperty({ description: '手机' })
+  @Column({ nullable: true })
+  phone: string;
+
   @ApiProperty({ description: '用户角色', type: () => Role })
   @ManyToMany(() => Role)
   @JoinTable({

@@ -16,7 +16,8 @@ import {
   Param,
   Query,
   ParseIntPipe,
-  UseGuards
+  UseGuards,
+  Request
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -28,6 +29,7 @@ import { User } from './entities/user.entity';
 import { PaginatedResponse } from '../../shared/interfaces/pagination.interface';
 import { Roles, UserRole } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @ApiTags('用户管理')
 @ApiBearerAuth()
@@ -68,6 +70,20 @@ export class UserController {
     return this.userService.findOne(id);
   }
 
+  @ApiOperation({ summary: '获取当前用户信息' })
+  @ApiResponse({ 
+    type: User,
+    description: '当前用户信息响应' 
+  })
+  @Get('/info/detail')
+  async findUserInfo(@Request() req): Promise<User> {
+    const userId = parseInt(req.user.userId, 10);
+    if (isNaN(userId)) {
+      throw new Error('无效的用户ID');
+    }
+    return this.userService.findOne(userId);
+  }
+
   @ApiOperation({ summary: '更新用户' })
   @ApiResponse({ 
     type: User,
@@ -79,6 +95,17 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
     return this.userService.update(id, updateUserDto);
+  }
+
+  // 修改密码
+  @ApiOperation({ summary: '修改密码' })
+  @ApiResponse({ 
+    type: User,
+    description: '修改密码响应' 
+  })
+  @Put('change/password')
+  async updatePassword(@Request() req, @Body() updatePasswordDto: UpdatePasswordDto): Promise<User> {
+    return this.userService.updatePassword(req.user.userId, updatePasswordDto);
   }
 
   @ApiOperation({ summary: '删除用户' })

@@ -66,7 +66,7 @@ export class FileController {
     @Param('id', ParseIntPipe) id: number,
     @Request() req,
   ): Promise<void> {
-    return this.fileService.remove(id, req.user.id);
+    return this.fileService.remove(id, req.user.userId);
   }
 
   @ApiOperation({ summary: '获取上传Token' })
