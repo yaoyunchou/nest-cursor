@@ -1,17 +1,24 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Task } from './task.entity';
 
+/**
+ * 目标实体
+ * 用于存储用户创建的目标信息
+ */
 @Entity('targets')
 export class Target {
   @PrimaryGeneratedColumn()
   id: number;
 
+  // 目标名称
   @Column()
   name: string;
 
+  // 目标详细描述
   @Column('text')
   description: string;
 
+  // 目标当前状态
   @Column({
     type: 'enum',
     enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
@@ -19,24 +26,31 @@ export class Target {
   })
   status: string;
 
+  // 目标类型，如：开发任务、学习任务等
   @Column()
   type: string;
 
+  // 目标计划完成时间（小时）
   @Column('float')
   plannedHours: number;
 
+  // 当前已完成时间（小时）
   @Column('float', { default: 0 })
   progress: number;
 
+  // 完成百分比（0-100）
   @Column('float', { default: 0 })
   completionPercentage: number;
 
+  // 关联的任务列表
   @OneToMany(() => Task, task => task.target)
   tasks: Task[];
 
+  // 创建时间
   @CreateDateColumn()
   createdAt: Date;
 
+  // 更新时间
   @UpdateDateColumn()
   updatedAt: Date;
 } 

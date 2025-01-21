@@ -16,6 +16,7 @@ import { ArticleModule } from './modules/article/article.module';
 import { HealthController } from './health/health.controller';
 import { RoleModule } from './modules/role/role.module';
 import { FileModule } from './modules/file/file.module';
+import { TargetModule } from './modules/target/target.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { FileModule } from './modules/file/file.module';
     ArticleModule,
     RoleModule,
     FileModule,
+    TargetModule,
   ],
   controllers: [HealthController],
 })
