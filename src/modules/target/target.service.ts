@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsWhere, Like, Repository } from 'typeorm';
 import { Target } from './entities/target.entity';
 import { Task } from './entities/task.entity';
 import { CreateTargetDto } from './dto/create-target.dto';

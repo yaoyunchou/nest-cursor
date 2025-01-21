@@ -10,10 +10,10 @@ import { CreateTargetTaskDto } from './dto/create-target-task.dot';
  * 处理与目标相关的HTTP请求
  */
 @ApiTags('目标')
-@Controller('target')
+@Controller('targetTask')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
-export class TargetController {
+export class TargetTaskController {
   constructor(private readonly targetService: TargetService) {}
 
   /**

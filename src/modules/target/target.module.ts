@@ -4,10 +4,11 @@ import { TargetController } from './target.controller';
 import { TargetService } from './target.service';
 import { Target } from './entities/target.entity';
 import { Task } from './entities/task.entity';
+import { TargetTaskController } from './targetTask.controller';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Target, Task])],
-  controllers: [TargetController],
+  controllers: [TargetController, TargetTaskController],
   providers: [TargetService],
   exports: [TargetService],
 })
