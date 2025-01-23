@@ -41,7 +41,9 @@ stages:
           - '# 如果你是php之类的无需制品包的制品方式，可以使用 git clone 或者 git pull 将源代码更新到服务器，再执行其他命令'
           - '# git clone ***@***.git'
           - ''
+          - cd /home/work
           - git clone git@gitee.com:xfygzs/nest-cursor.git
+          - cd nest-cursor
           - yarn
           - yarn build
           - yarn pm2
