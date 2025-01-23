@@ -104,10 +104,22 @@ export class TargetService {
 
   /**
    * 删除目标
+   * 返回删除结果
    * @param id - 目标ID
    */
-  async delete(id: number): Promise<void> {
-    await this.targetRepository.delete(id);
+  async delete(id: number): Promise<{message: string}> { 
+    try {
+      await this.targetRepository.delete(id);
+      await this.taskRepository.delete({ target: { id } });
+      return {
+        message: '删除成功',
+      };
+    } catch (error) {
+      return {
+        message: '删除失败',
+      };
+    }
+
   }
 
   /**
@@ -144,12 +156,46 @@ export class TargetService {
   }
 
   /**
-   * 获取指定目标下的所有任务
-   * @param targetId - 目标ID
+   * 获取指定任务列表
+   * @param query - 查询参数, 包含pageSize, pageIndex, name, targetId
    * @returns 任务列表
    */
-  async findAllTasks(targetId: number): Promise<Task[]> {
-    return await this.taskRepository.find({ where: { target: { id: targetId } } });
+  async findAllTasks(query: {pageSize?: number, userId?: number, pageIndex?: number, name?: string, status?: string, targetId?: number}):
+   Promise<{list: Task[], total: number, pageSize: number, pageIndex: number}> {
+    const {pageSize = 10, pageIndex = 1, userId, name, targetId} = query;
+    const where: FindOptionsWhere<Task> = {};
+    if (name) {
+      where.name = Like(`%${name}%`);
+    }
+    if (userId) {
+      where.userId = userId;
+    }
+    if (targetId) {
+      where.target = { id: targetId };
+    }
+    if (userId) {
+      where.userId = userId;
+    }
+    /**
+     * 返回任务列表
+     * list: 任务列表
+     * total: 任务总数
+     * pageSize: 每页大小
+     * pageIndex: 当前页码
+     * targetId: 目标ID
+     */
+    const [tasks, total] = await this.taskRepository.findAndCount({     
+      relations: ['target'],
+      where,
+      skip: (pageIndex - 1) * pageSize,
+      take: pageSize,
+    });
+    return {
+      list: tasks,
+      total,
+      pageSize,
+      pageIndex,
+    };
   }
 
   /**

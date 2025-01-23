@@ -17,43 +17,12 @@ export class TargetTaskController {
   constructor(private readonly targetService: TargetService) {}
 
   /**
-   * 创建新目标
-   * @param createTargetDto - 目标创建数据
-   * @returns 创建的目标实体
-   */
-  @Post()
-  @ApiOperation({ summary: '创建目标' })
-  create(@Body() createTargetDto: CreateTargetDto) {
-    return this.targetService.create(createTargetDto);
-  }
-
-  /**
-   * 获取所有目标
-   * @returns 目标列表
-   */
-  @Get('list')
-  @ApiOperation({ summary: '获取所有目标' })
-  findAll(@Query() query: {pageSize?: number, pageIndex?: number, name?: string, status?: string}) {
-    return this.targetService.findAll(query);
-  }
-
-  /**
-   * 获取指定ID的目标
-   * @param id - 目标ID
-   * @returns 目标实体
-   */
-  @Get(':id')
-  @ApiOperation({ summary: '获取指定目标' })
-  findOne(@Param('id') id: string) {
-    return this.targetService.findOne(+id);
-  }
-  /**
    * 创建新任务
    * @param targetId - 目标ID
    * @param createTaskDto - 任务创建数据
    * @returns 创建的任务实体
    */
-  @Post(':targetId/task')
+  @Post(':targetId')
   @ApiOperation({ summary: '创建任务' })
   createTask(@Request() req, @Param('targetId') targetId: string, @Body() createTargetTaskDto: CreateTargetTaskDto, ) {
     if(req?.user?.userId) {
@@ -68,21 +37,21 @@ export class TargetTaskController {
    * @param taskId - 任务ID
    * @returns 删除结果
    */
-  @Delete(':targetId/task/:taskId')
+  @Delete(':taskId')
   @ApiOperation({ summary: '删除任务' })
   deleteTask(@Param('targetId') targetId: string, @Param('taskId') taskId: string) {
     return this.targetService.deleteTask(+targetId, +taskId);
   }
 
   /**
-   * 获取目标下的所有任务
-   * @param targetId - 目标ID
+   * 获取任务列表
+   * @param query - 查询参数, 包含pageSize, pageIndex, name, status, targetId
    * @returns 任务列表
    */
-  @Get(':targetId/tasks')
-  @ApiOperation({ summary: '获取目标下的所有任务' })
-  findAllTasks(@Param('targetId') targetId: string) {
-    return this.targetService.findAllTasks(+targetId);
+  @Get('list')
+  @ApiOperation({ summary: '获取任务列表' })
+  findAllTasks(@Query() query: {pageSize?: number, userId?: number, pageIndex?: number, name?: string, targetId?: number}) {
+    return this.targetService.findAllTasks(query);
   }
 
   /**
@@ -91,7 +60,7 @@ export class TargetTaskController {
    * @param taskId - 任务ID
    * @returns 任务实体
    */
-  @Get(':targetId/task/:taskId')
+  @Get('/info/:taskId')
   @ApiOperation({ summary: '获取指定任务' })
   findOneTask(@Param('targetId') targetId: string, @Param('taskId') taskId: string) {
     return this.targetService.findOneTask(+targetId, +taskId);
