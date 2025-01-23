@@ -1,0 +1,40 @@
+version: '1.0'
+name: pipeline-20250123
+displayName: pipeline-20250123
+triggers:
+  trigger: auto
+  push:
+    branches:
+      precise:
+        - master
+    paths:
+      precise:
+        - src
+stages:
+  - name: stage-cde051f9
+    displayName: 构建
+    strategy: naturally
+    trigger: auto
+    executor:
+      - xfysj
+    steps:
+      - step: build@nodejs
+        name: build_nodejs
+        displayName: Nodejs 构建
+        nodeVersion: 18.16.0
+        commands:
+          - '# 设置NPM源，提升安装速度'
+          - yarn config set registry https://registry.npmmirror.com
+          - ''
+          - '# 执行编译命令'
+          - yarn  && yarn build
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./dist
+        caches:
+          - ~/.npm
+          - ~/.yarn
+        notify: []
+        strategy:
+          retry: '0'
