@@ -21,7 +21,7 @@ export class TransformInterceptor<T>
     console.log('data', request.body);
     return next.handle().pipe(
       map((data) => {
-        console.log('data', data);
+        // console.log('data', data);
         return {
           code: 0,
           message: '操作成功',

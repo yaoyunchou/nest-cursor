@@ -17,6 +17,7 @@ import { HealthController } from './health/health.controller';
 import { RoleModule } from './modules/role/role.module';
 import { FileModule } from './modules/file/file.module';
 import { TargetModule } from './modules/target/target.module';
+import { CoreModule } from './core/core.module';
 
 @Module({
   imports: [
@@ -45,6 +46,7 @@ import { TargetModule } from './modules/target/target.module';
     RoleModule,
     FileModule,
     TargetModule,
+    CoreModule,
   ],
   controllers: [HealthController],
 })

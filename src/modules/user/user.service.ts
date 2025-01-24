@@ -134,4 +134,12 @@ export class UserService {
     user.password = hashedPassword;
     return await this.userRepository.save(user);
   }
+  // findByOpenid
+  async findByOpenid(openid: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { openid },
+    });
+    return user;
+  }
+  
 } 

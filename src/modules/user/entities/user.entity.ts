@@ -53,6 +53,10 @@ export class User {
   @ApiProperty({ description: '手机' })
   @Column({ nullable: true })
   phone: string;
+   
+  @ApiProperty({ description: '微信openid' })
+  @Column({ nullable: true, unique: true })
+  openid?: string;
 
   @ApiProperty({ description: '用户角色', type: () => Role })
   @ManyToMany(() => Role)

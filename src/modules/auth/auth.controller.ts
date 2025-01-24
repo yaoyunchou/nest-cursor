@@ -6,12 +6,13 @@
  * @FilePath: \nest-cursor\src\auth\auth.controller.ts
  * @Description: 认证控制器
  */
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, HttpException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { WechatLoginDto } from './dto/wechat-login.dto';
 
 @ApiTags('认证管理')
 @Controller('auth')
@@ -34,5 +35,37 @@ export class AuthController {
   @Post('register')
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
+  }
+
+  /**
+   * 微信小程序登录
+   * 1， 获取openid 和 session_key, 可以存入jwt中吗？
+   * 2，将信息存入session中
+   * @param wechatLoginDto 
+   * @returns 
+   */
+  @Public()
+  @ApiOperation({ summary: '微信小程序登录' })
+  @ApiResponse({ status: 200, description: '登录成功' })
+  @ApiResponse({ status: 401, description: '登录失败' })
+  @Post('wechat/login')
+  async wechatLogin(@Body() wechatLoginDto: WechatLoginDto) {
+    return this.authService.wechatLogin(wechatLoginDto);
+  }
+
+  // 校验登录状态
+  @ApiOperation({ summary: '校验登录状态' })
+  @ApiResponse({ status: 200, description: '登录状态校验成功' })
+  @ApiResponse({ status: 401, description: '登录状态校验失败' })
+  @Get('wechat/check-login')
+  async checkLogin(@Query('code') code: string, @Query('openid') openid: string) {
+    try {
+      return this.authService.getUserPhoneNumber(code, openid);
+    } catch (error) {
+      return {
+        message: '登录状态校验失败',
+        code: 401,
+      };
+    }
   }
 } 

@@ -40,6 +40,18 @@ export class CreateUserDto {
   @IsOptional()
   remark?: string;
 
+  // phone 手机 非必选
+  @ApiProperty({ description: '手机', required: false })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+
+  @ApiProperty({ description: '微信openid', required: false })
+  @IsString()
+  @IsOptional()
+  openid?: string;
+
   @ApiProperty({ description: '角色ID列表', type: [Number] })
   @IsArray()
   @IsOptional()

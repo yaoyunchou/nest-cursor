@@ -138,46 +138,20 @@
 ## 项目结构
 
 src/
-├── config/ # 配置文件目录
-│ ├── database.config.ts
-│ └── jwt.config.ts
-├── common/ # 通用模块目录
-│ ├── decorators/ # 自定义装饰器
-│ ├── filters/ # 异常过滤器
-│ ├── guards/ # 守卫
-│ ├── interceptors/ # 拦截器
-│ ├── middleware/ # 中间件
-│ └── pipes/ # 管道
-├── modules/ # 业务模块目录
-│ ├── auth/ # 认证模块
-│ │ ├── dto/
-│ │ ├── entities/
-│ │ ├── auth.controller.ts
-│ │ ├── auth.service.ts
-│ │ ├── auth.module.ts
-│ │ └── auth.spec.ts
-│ ├── user/ # 用户模块
-│ │ ├── dto/
-│ │ ├── entities/
-│ │ ├── user.controller.ts
-│ │ ├── user.service.ts
-│ │ ├── user.module.ts
-│ │ └── user.spec.ts
-│ └── role/ # 角色模块
-│ ├── dto/
-│ ├── entities/
-│ ├── role.controller.ts
-│ ├── role.service.ts
-│ ├── role.module.ts
-│ └── role.spec.ts
-├── shared/ # 共享资源目录
-│ ├── constants/ # 常量定义
-│ ├── interfaces/ # 接口定义
-│ └── utils/ # 工具函数
-├── app.module.ts # 根模块
-├── app.controller.ts # 根控制器
-├── app.service.ts # 根服务
-└── main.ts # 应用入口文件
+├── core/                # 核心模块目录
+│   ├── guards/         # 全局守卫
+│   ├── interceptors/   # 全局拦截器
+│   ├── filters/        # 全局过滤器
+│   └── services/       # 核心服务
+│       └── redis/      # Redis 服务
+├── shared/             # 共享模块目录
+│   ├── constants/      # 常量定义
+│   ├── interfaces/     # 接口定义
+│   └── utils/         # 工具函数
+└── modules/           # 业务模块目录
+    ├── auth/          # 认证模块
+    ├── user/          # 用户模块
+    └── ...
 
 test/ # 测试目录
 ├── e2e/ # 端到端测试
