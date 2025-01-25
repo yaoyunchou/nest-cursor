@@ -62,7 +62,7 @@ export class AuthService {
 
   async wechatLogin(wechatLoginDto: WechatLoginDto) {
     try {
-      const { code } = wechatLoginDto;
+      const { code, username, avatar } = wechatLoginDto;
       const wxAppid = process.env.WECHAT_APP_ID;
       const wxSecret = process.env.WECHAT_APP_SECRET;
       const secret = process.env.SECRET;
@@ -84,7 +84,8 @@ export class AuthService {
         // 创建新用户
         user = await this.userService.create({
           openid,
-          username: `wx_${openid.slice(-8)}`, // 生成一个默认用户名
+          username: username || `wx_${openid.slice(-8)}`, // 生成一个默认用户名
+          avatar: avatar || '',
           password: '', // 微信用户无密码
         });
       }

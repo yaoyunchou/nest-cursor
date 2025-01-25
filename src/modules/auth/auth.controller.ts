@@ -39,7 +39,7 @@ export class AuthController {
 
   /**
    * 微信小程序登录
-   * 1， 获取openid 和 session_key, 可以存入jwt中吗？
+   * 1， 获取openid 和 session_key？
    * 2，将信息存入session中
    * @param wechatLoginDto 
    * @returns 
@@ -53,19 +53,4 @@ export class AuthController {
     return this.authService.wechatLogin(wechatLoginDto);
   }
 
-  // 校验登录状态
-  @ApiOperation({ summary: '校验登录状态' })
-  @ApiResponse({ status: 200, description: '登录状态校验成功' })
-  @ApiResponse({ status: 401, description: '登录状态校验失败' })
-  @Get('wechat/check-login')
-  async checkLogin(@Query('code') code: string, @Query('openid') openid: string) {
-    try {
-      return this.authService.getUserPhoneNumber(code, openid);
-    } catch (error) {
-      return {
-        message: '登录状态校验失败',
-        code: 401,
-      };
-    }
-  }
 } 
