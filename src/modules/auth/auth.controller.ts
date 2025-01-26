@@ -39,7 +39,7 @@ export class AuthController {
 
   /**
    * 微信小程序登录
-   * 1， 获取openid 和 session_key, 可以存入jwt中吗？
+   * 1， 获取openid 和 session_key？
    * 2，将信息存入session中
    * @param wechatLoginDto 
    * @returns 
@@ -53,15 +53,4 @@ export class AuthController {
     return this.authService.wechatLogin(wechatLoginDto);
   }
 
-  // 获取微信小程序用户手机号码
-  @Public()
-  @ApiOperation({ summary: '获取微信小程序用户手机号码' })
-  @ApiResponse({ status: 200, description: '获取成功' })
-  @ApiResponse({ status: 401, description: '获取失败' })
-  @Get('wechat/get-phone-number')
-  async getPhoneNumber(@Query('code') code: string, @Request() req,) {
-    // 获取openid
-    const userId = req.userId;
-    return this.authService.getUserPhoneNumber(code, userId);
-  }
 } 

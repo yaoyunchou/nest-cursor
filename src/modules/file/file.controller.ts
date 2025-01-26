@@ -27,6 +27,7 @@ import { File } from './entities/file.entity';
 import { QueryFileDto } from './dto/query-file.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { PaginatedResponse } from '../../shared/interfaces/pagination.interface';
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -39,7 +40,7 @@ export class FileController {
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UploadFileDto })
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file')) // 使用文件拦截器
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @Request() req,
@@ -47,6 +48,20 @@ export class FileController {
     // 获取用户id
     return this.fileService.upload(file, req.user.userId);
   }
+
+  // 无登陆信息文件上传 
+  @ApiOperation({ summary: '无登陆信息文件上传' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: UploadFileDto })
+  @Post('upload/no-auth')
+  @UseInterceptors(FileInterceptor('file')) // 使用文件拦截器
+  @Public() // 将此接口加入白名单,不需要授权
+  async uploadNoAuth(
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<File> {
+    return this.fileService.upload(file, 1);
+  }
+
 
   @ApiOperation({ summary: '获取文件列表' })
   @Get('list')
