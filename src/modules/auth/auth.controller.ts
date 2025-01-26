@@ -6,7 +6,7 @@
  * @FilePath: \nest-cursor\src\auth\auth.controller.ts
  * @Description: 认证控制器
  */
-import { Controller, Post, Body, Get, Query, HttpException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, HttpException, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
@@ -53,19 +53,15 @@ export class AuthController {
     return this.authService.wechatLogin(wechatLoginDto);
   }
 
-  // 校验登录状态
-  @ApiOperation({ summary: '校验登录状态' })
-  @ApiResponse({ status: 200, description: '登录状态校验成功' })
-  @ApiResponse({ status: 401, description: '登录状态校验失败' })
-  @Get('wechat/check-login')
-  async checkLogin(@Query('code') code: string, @Query('openid') openid: string) {
-    try {
-      return this.authService.getUserPhoneNumber(code, openid);
-    } catch (error) {
-      return {
-        message: '登录状态校验失败',
-        code: 401,
-      };
-    }
+  // 获取微信小程序用户手机号码
+  @Public()
+  @ApiOperation({ summary: '获取微信小程序用户手机号码' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  @ApiResponse({ status: 401, description: '获取失败' })
+  @Get('wechat/get-phone-number')
+  async getPhoneNumber(@Query('code') code: string, @Request() req,) {
+    // 获取openid
+    const userId = req.userId;
+    return this.authService.getUserPhoneNumber(code, userId);
   }
 } 

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Like, Repository } from 'typeorm';
 import { Target } from './entities/target.entity';
@@ -129,9 +129,32 @@ export class TargetService {
    * @returns 创建的任务实体
    */
   async createTask(targetId: number, createTargetTaskDto: CreateTargetTaskDto): Promise<Task> {
-    const target = await this.findOne(targetId);
-    const task = this.taskRepository.create({ ...createTargetTaskDto, target });
-    return await this.taskRepository.save(task);
+    try {
+      const target = await this.findOne(targetId);
+      if(!target) {
+        throw new NotFoundException('目标不存在');
+      }
+      /**
+     /**
+      * 获取目标对应的所有任务
+      * 计算当前目标的进度， 总时间， 剩余时间
+      */
+    const targetTasks = await this.taskRepository.find({ where: { target: { id: targetId } } });
+    const totalTaskTime = targetTasks.reduce((sum, task) => sum + task.time, 0);
+    const progress = totalTaskTime;
+    const completionPercentage = (totalTaskTime / target.plannedHours) * 100;
+    target.progress = progress;
+    target.completionPercentage = completionPercentage;
+    await this.targetRepository.update(targetId, {
+      progress,
+      completionPercentage: Math.min(completionPercentage, 100),
+    }); 
+      const task = this.taskRepository.create({ ...createTargetTaskDto, target });
+
+      return await this.taskRepository.save(task);
+    } catch (error) {
+      throw new BadRequestException('创建任务失败');  
+    }
   }
 
   /**

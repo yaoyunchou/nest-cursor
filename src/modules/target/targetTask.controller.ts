@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Delete, Query,Request } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Delete, Query,Request, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TargetService } from './target.service';
 import { CreateTargetDto } from './dto/create-target.dto';
@@ -24,10 +24,13 @@ export class TargetTaskController {
    */
   @Post(':targetId')
   @ApiOperation({ summary: '创建任务' })
-  createTask(@Request() req, @Param('targetId') targetId: string, @Body() createTargetTaskDto: CreateTargetTaskDto, ) {
+  async createTask(@Request() req, @Param('targetId') targetId: string, @Body() createTargetTaskDto: CreateTargetTaskDto, ) {
     if(req?.user?.userId) {
       createTargetTaskDto.userId = req?.user?.userId;
     }
+
+   
+
     return this.targetService.createTask(+targetId, createTargetTaskDto);
   }
 

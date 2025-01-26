@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsNumber, IsOptional, IsDateString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTargetDto {
@@ -13,4 +13,12 @@ export class CreateTargetDto {
   @ApiProperty({ description: '目标计划完成时间（小时）' })
   @IsNumber()
   plannedHours: number;
+
+  @ApiProperty({ description: '目标开始时间' })
+  @IsDateString()
+  startTime: Date;
+
+  @ApiProperty({ description: '目标结束时间' })
+  @IsDateString()
+  endTime: Date;
 } 

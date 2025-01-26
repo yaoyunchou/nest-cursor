@@ -30,7 +30,7 @@ export class Task {
 
   // 上传图片内容
   @Column('text', { nullable: true })
-  image: string;
+  images: string;
 
   // 关联的目标, 创建task_target表,记录task和target的关系,创建对应的任务的时候,会自动创建对应的task_target记录
   @ManyToOne(() => Target, target => target.tasks)

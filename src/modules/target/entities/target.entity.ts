@@ -39,6 +39,14 @@ export class Target {
   @Column('float', { default: 0 })
   completionPercentage: number;
 
+  // 目标开始时间
+  @Column('timestamp')
+  startTime: Date;
+
+  // 目标结束时间
+  @Column('timestamp')
+  endTime: Date;
+
   // 关联的任务列表
   @OneToMany(() => Task, task => task.target)
   tasks: Task[];
