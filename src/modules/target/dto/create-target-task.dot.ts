@@ -30,6 +30,10 @@ export class CreateTargetTaskDto {
   @IsNumber()
   targetId: number;
 
+  @ApiProperty({ description: '任务图片' })
+  @IsOptional()
+  @IsString()
+  images: string;
 
   // 非必填
   @ApiProperty({ description: '用户ID' })
