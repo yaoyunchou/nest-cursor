@@ -18,6 +18,7 @@ import { RoleModule } from './modules/role/role.module';
 import { FileModule } from './modules/file/file.module';
 import { TargetModule } from './modules/target/target.module';
 import { CoreModule } from './core/core.module';
+import { LowcodeModule } from './modules/lowcode/lowcode.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { CoreModule } from './core/core.module';
     FileModule,
     TargetModule,
     CoreModule,
+    LowcodeModule,
   ],
   controllers: [HealthController],
 })

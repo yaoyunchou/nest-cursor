@@ -13,6 +13,7 @@ import { Logger } from '@nestjs/common';
 import { LoggerMiddleware } from './core/middleware/logger.middleware';
 import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
+import { User } from './modules/user/entities/user.entity';
 
 declare const module: any;
 
@@ -32,12 +33,28 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('CMS API 文档')
     .setDescription('图书、文章和用户管理系统的 API 文档')
-    .setVersion('1.0')
+    .setVersion('3.0.0')
+    // .addServer('http://localhost:3000', '开发环境')
+    .setExternalDoc('接口规范文档', 'https://api.example.com/spec')
+    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
-  
+  const document = SwaggerModule.createDocument(app, config,{
+    // openapi: '3.0.3', // 明确指定 OpenAPI 版本
+  });
+  SwaggerModule.setup('api', app, document, {
+    customSiteTitle: 'CMS API 文档',
+    // customCss: '.swagger-ui .topbar { display: none }',
+    explorer: true,
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      showCommonExtensions: true,
+      showExtensions: true,
+    },
+  });
+
   const port = process.env.APP_PORT || 3000;
   await app.listen(port);
   logger.log(`应用程序已启动: http://localhost:${port}`);
