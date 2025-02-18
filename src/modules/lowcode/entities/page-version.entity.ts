@@ -15,9 +15,6 @@ export class PageVersion {
   @ApiProperty({ description: '页面ID' })
   pageId: number;
 
-  @ManyToOne(() => Page, page => page.versions)
-  @JoinColumn({ name: 'pageId' })
-  page: Page;
 
   @Column({ type: 'text' })
   @ApiProperty({ description: '页面JSON数据' })

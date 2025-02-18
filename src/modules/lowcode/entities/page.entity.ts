@@ -45,8 +45,6 @@ export class Page {
   @ApiProperty({ description: '更新时间' })
   updatedAt: Date;
 
-  @OneToMany(() => PageVersion, version => version.page)
-  versions: PageVersion[];
 
 
 } 

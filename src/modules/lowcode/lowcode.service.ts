@@ -7,6 +7,7 @@ import { CreatePageDto } from './dto/create-page.dto';
 import { UpdatePageDto } from './dto/update-page.dto';
 import { PublishPageDto } from './dto/publish-page.dto';
 import { Cron } from '@nestjs/schedule';
+import { PageCache } from './entities/page-cache.entity';
 
 @Injectable()
 export class LowcodeService {
@@ -15,6 +16,8 @@ export class LowcodeService {
     private readonly pageRepository: Repository<Page>,
     @InjectRepository(PageVersion)
     private readonly versionRepository: Repository<PageVersion>,
+    @InjectRepository(PageCache)
+    private readonly cacheRepository: Repository<PageCache>,
   ) {}
 
   async create(createPageDto: CreatePageDto): Promise<Page> {
@@ -66,11 +69,74 @@ export class LowcodeService {
     const updatedPage = Object.assign(page, updatePageDto);
     const savedPage = await this.pageRepository.save(updatedPage);
     
-    // 创建新的版本记录
-    await this.createVersion(savedPage, PageStatus.DRAFT);
+    // 创建页面缓存
+    await this.createCache(savedPage);
     
     return savedPage;
   }
+
+  /**
+   * 创建页面缓存
+   */
+  private async createCache(page: Page): Promise<void> {
+    // 创建新的缓存记录
+    const cache = this.cacheRepository.create({
+      pageId: page.id,
+      content: page.content,
+    });
+    await this.cacheRepository.save(cache);
+
+    // 检查并清理超出限制的缓存
+    await this.cleanupPageCache(page.id);
+  }
+
+  /**
+   * 获取页面的缓存历史
+   */
+  async getPageCacheHistory(pageId: number): Promise<PageCache[]> {
+    return await this.cacheRepository.find({
+      where: { pageId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  /**
+   * 清理单个页面的缓存
+   */
+  private async cleanupPageCache(pageId: number): Promise<void> {
+    // 获取该页面的所有缓存记录，按时间倒序
+    const caches = await this.cacheRepository.find({
+      where: { pageId },
+      order: { createdAt: 'DESC' },
+    });
+
+    // 如果缓存数量超过100条，删除多余的记录
+    if (caches.length > 100) {
+      const cachesToDelete = caches.slice(100);
+      await this.cacheRepository.remove(cachesToDelete);
+    }
+  }
+
+  // 每天凌晨3点执行清理缓存
+  @Cron('0 0 3 * * *')
+  async cleanupCaches() {
+    // 删除超过100天的缓存
+    const hundredDaysAgo = new Date();
+    hundredDaysAgo.setDate(hundredDaysAgo.getDate() - 100);
+
+    await this.cacheRepository.delete({
+      createdAt: LessThan(hundredDaysAgo),
+    });
+
+    // 获取所有页面
+    const pages = await this.pageRepository.find();
+    
+    // 为每个页面清理超过100条的缓存
+    for (const page of pages) {
+      await this.cleanupPageCache(page.id);
+    }
+  }
+
   /**
    * 校验版本号是否递增
    * @param newVersion 新版本号

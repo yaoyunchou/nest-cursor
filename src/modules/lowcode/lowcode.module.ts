@@ -5,10 +5,11 @@ import { LowcodeController } from './lowcode.controller';
 import { LowcodeService } from './lowcode.service';
 import { Page } from './entities/page.entity';
 import { PageVersion } from './entities/page-version.entity';
+import { PageCache } from './entities/page-cache.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Page, PageVersion]),
+    TypeOrmModule.forFeature([Page, PageVersion, PageCache]),
     ScheduleModule.forRoot(),
   ],
   controllers: [LowcodeController],
