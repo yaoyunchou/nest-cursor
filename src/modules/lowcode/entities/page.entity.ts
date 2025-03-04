@@ -26,12 +26,9 @@ export class Page {
   @ApiProperty({ description: '页面状态', enum: PageStatus })
   status: PageStatus;
 
-  @Column({ 
-    type: 'int',
-    default: 1
-  })
-  @ApiProperty({ description: '当前版本号' })
-  version: number;
+  @Column({ default: '1.0.0' })
+  @ApiProperty({ description: '版本号' })
+  version: string;
 
   @Column({ default: true })
   @ApiProperty({ description: '是否启用' })

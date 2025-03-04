@@ -36,9 +36,20 @@ export class AuthService {
       throw new UnauthorizedException('用户名或密码错误');
     }
 
-    const payload = { sub: user.id, username: user.username, roles: user.roles };
+    const roles = await this.userService.getUserRoles(user.id);
+    const payload = { 
+      sub: user.id, 
+      username: user.username,
+      roles: roles
+    };
+
     return {
       access_token: this.jwtService.sign(payload, { secret: process.env.SECRET }),
+      user: {
+        id: user.id,
+        username: user.username,
+        roles: roles
+      }
     };
   }
 

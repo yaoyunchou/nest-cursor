@@ -12,8 +12,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
 import { LoggerMiddleware } from './core/middleware/logger.middleware';
 import { TransformInterceptor } from './core/interceptors/transform.interceptor';
-import { HttpExceptionFilter } from './core/filters/http-exception.filter';
-import { User } from './modules/user/entities/user.entity';
+import { JwtExceptionFilter } from './core/filters/jwt-exception.filter';
 
 declare const module: any;
 
@@ -24,9 +23,9 @@ async function bootstrap() {
   app.setGlobalPrefix('api/v1');
   
   app.useGlobalInterceptors(new TransformInterceptor());
-  // 配置全局过滤器
-  app.useGlobalFilters(new HttpExceptionFilter());
-  
+
+  // 配置JWT异常过滤器
+  app.useGlobalFilters(new JwtExceptionFilter());
   app.use(LoggerMiddleware);
   
   // 配置 Swagger

@@ -24,7 +24,7 @@ export class LowcodeService {
     const page = this.pageRepository.create({
       ...createPageDto,
       status: PageStatus.DRAFT,
-      version: 1,
+      version: '1.0.0',
     });
     const savedPage = await this.pageRepository.save(page);
 
@@ -34,12 +34,12 @@ export class LowcodeService {
     return savedPage;
   }
 
-  private async createVersion(page: Page, type: PageStatus, versionStr?: string, remark?: string): Promise<PageVersion> {
+  private async createVersion(page: Page, type: PageStatus, remark?: string): Promise<PageVersion> {
     const version = this.versionRepository.create({
       pageId: page.id,
       content: page.content,
-      version: versionStr,
       remark,
+      version: '1.0.0',
     });
     return await this.versionRepository.save(version);
   }
@@ -63,8 +63,7 @@ export class LowcodeService {
   async update(id: number, updatePageDto: UpdatePageDto): Promise<Page> {
     const page = await this.findOne(id);
     
-    // 更新版本号
-    page.version += 1;
+  
     
     const updatedPage = Object.assign(page, updatePageDto);
     const savedPage = await this.pageRepository.save(updatedPage);
@@ -187,7 +186,7 @@ export class LowcodeService {
     const savedPage = await this.pageRepository.save(page);
     
     // 创建发布版本记录
-    await this.createVersion(savedPage, PageStatus.PUBLISHED,publishDto.version, publishDto.remark);
+    await this.createVersion(savedPage, PageStatus.PUBLISHED,publishDto.remark);
     
     return savedPage;
   }
