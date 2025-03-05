@@ -71,6 +71,14 @@ export class AuthService {
     };
   }
 
+  /**
+   *  这个接口有两个功能
+   * 1. 根据code返回对应的数据，如果用户没有注册过，则判断是否传入了头像和用户名， 没有则直击返回用户信息为null
+   * 2. 如果用户没有注册过，还传入了用户名和头像， 则新增用户， 默认角色为用户， 而且必须传入用户名和头像， 完成后返回用户信息和token
+   * 3. 如果用户已经注册过，则实现静默登录的逻辑， 返回用户信息和token
+   * @param wechatLoginDto 
+   * @returns 
+   */
   async wechatLogin(wechatLoginDto: WechatLoginDto) {
     try {
       const { code, username, avatar } = wechatLoginDto;
@@ -93,6 +101,13 @@ export class AuthService {
 
       if (!user) {
         // 创建新用户
+        if (!username || !avatar) {
+          // 这里不能当错误执行， 这个场景对应第一个功能， 返回对应的信息即可
+          return {
+            message: '用户没有注册',
+            data: null,
+          };
+        }
         user = await this.userService.create({
           openid,
           username: username || `wx_${openid.slice(-8)}`, // 生成一个默认用户名
@@ -116,6 +131,8 @@ export class AuthService {
         user: {
           id: user.id,
           session_key,
+          avatar: user.avatar,
+          phone: user.phone,
           username: user.username,
         }
       };
