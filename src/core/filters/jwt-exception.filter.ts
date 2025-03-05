@@ -27,7 +27,7 @@ export class JwtExceptionFilter implements ExceptionFilter {
     }else{
         // 是否传入code, 如果传入code, 则返回code, 否则返回403
       response.status(HttpStatus.OK).json({
-        code: HttpStatus.OK_CODE,
+        code: 0,
         message: exception.message,
         data: null,
         path: request.url,
