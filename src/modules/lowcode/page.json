@@ -1,0 +1,64 @@
+[
+    {
+      "id": "9yygei8po",
+      "type": "page",
+      "props": {},
+      "style": {
+        "width": "100%",
+        "minHeight": "100vh",
+        "padding": "10px",
+        "position": "relative"
+      },
+      "children": [
+        {
+          "id": "t6ta5pp82",
+          "type": "container",
+          "props": {
+            "style": {
+              "width": "100%",
+              "minHeight": 100,
+              "padding": "8px",
+              "position": "relative",
+              "marginBottom": "12px"
+            }
+          },
+          "style": {},
+          "children": [
+            {
+              "id": "f8q3nz2zl",
+              "type": "typography",
+              "props": {
+                "content": "文本内容",
+                "type": "secondary",
+                "strong": false,
+                "mark": false,
+                "italic": false,
+                "underline": false
+              },
+              "style": {
+                "display": "inline-block"
+              },
+              "children": []
+            },
+            {
+              "id": "kb0vlktcw",
+              "type": "button",
+              "props": {
+                "type": "primary",
+                "children": "按钮",
+                "size": "middle",
+                "block": false,
+                "danger": false,
+                "ghost": false,
+                "disabled": false
+              },
+              "style": {
+                "display": "inline-block"
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    }
+  ]

@@ -16,7 +16,7 @@ import {
   JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role } from '../../role/role.entity'
+import { Role } from '../../role/entities/role.entity';
 
 
 @Entity('user')
@@ -59,7 +59,7 @@ export class User {
   openid?: string;
 
   @ApiProperty({ description: '用户角色', type: () => Role })
-  @ManyToMany(() => Role)
+  @ManyToMany(() => Role, { cascade: true })
   @JoinTable({
     name: 'user_roles',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },

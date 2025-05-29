@@ -19,6 +19,8 @@ import { FileModule } from './modules/file/file.module';
 import { TargetModule } from './modules/target/target.module';
 import { CreationModule } from './modules/creation/creation.module';
 import { CoreModule } from './core/core.module';
+import { LowcodeModule } from './modules/lowcode/lowcode.module';
+import { NavigationModule } from './modules/navigation/navigation.module';
 
 @Module({
   imports: [
@@ -36,9 +38,15 @@ import { CoreModule } from './core/core.module';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      logging: process.env.LOG_ON === 'true',
       synchronize: true,
+      dropSchema: false,
+      logging: process.env.LOG_ON === 'true',
       logger: process.env.LOG_LEVEL as any,
+      extra: {
+        charset: 'utf8mb4_unicode_ci',
+        connectionLimit: 10,
+      },
+      entitySkipConstructor: true,
     }),
     AuthModule,
     UserModule,
@@ -49,6 +57,8 @@ import { CoreModule } from './core/core.module';
     TargetModule,
     CreationModule,
     CoreModule,
+    LowcodeModule,
+    NavigationModule,
   ],
   controllers: [HealthController],
 })
