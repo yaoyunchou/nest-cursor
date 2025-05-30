@@ -308,9 +308,11 @@ export class CreationController {
   @ApiResponse({ status: 200, description: '查询成功', type: Object })
   @ApiResponse({ status: 404, description: '执行记录不存在' })
   async getWorkflowStatus(
+    @Query() queryObjects,
     @Param('executeId') executeId: string,
   ): Promise<CozeWorkflowStatusResponse> {
-    return this.cozeService.getWorkflowStatus(executeId);
+    const { workflow_id} = queryObjects
+    return this.cozeService.getWorkflowStatus(workflow_id, executeId);
   }
 
   /**

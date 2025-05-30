@@ -84,8 +84,14 @@ export interface CozeErrorResponse {
  * Coze服务配置
  */
 export interface CozeConfig {
-  baseUrl: string;
-  apiKey: string;
+  baseUrl?: string;
+  apiKey?: string;
   defaultWorkflowId?: string;
   timeout?: number;
+  client_type: string;
+  client_id: string;
+  coze_www_base: string;
+  coze_api_base: string;
+  private_key: string;
+  public_key_id: string;
 } 

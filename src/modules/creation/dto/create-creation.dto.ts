@@ -20,6 +20,11 @@ export class CreateCreationDto {
   @Length(1, 5000, { message: '提示词长度必须在1-5000字符之间' })
   prompt: string;
 
+  @ApiProperty({ description: '类型', example: 'text' })
+  @IsString({ message: '类型必须是字符串' })
+  @Length(1, 5000, { message: '类型长度必须在1-5000字符之间' })
+  type: string;
+
   @ApiProperty({ 
     description: '图片URL数组', 
     type: [String], 

@@ -20,6 +20,7 @@ import {
   CozeErrorResponse,
   CozeConfig,
 } from '../interfaces/coze.interface';
+import { getJWTToken } from '@coze/api';
 
 @Injectable()
 export class CozeService {
@@ -32,19 +33,23 @@ export class CozeService {
   constructor(private readonly configService: ConfigService) {
     // 从环境变量获取配置
     this.config = {
-      baseUrl: this.configService.get<string>('COZE_BASE_URL', 'https://api.coze.cn'),
-      apiKey: this.configService.get<string>('COZE_API_KEY'),
+      client_type: "jwt",
+      client_id:this.configService.get<string>('COZE_CLIENT_ID'),
+      coze_www_base: "https://www.coze.cn",
+      coze_api_base: "https://api.coze.cn",
+      private_key: this.configService.get<string>('COZE_PRIVATE_KEY'),
       defaultWorkflowId: this.configService.get<string>('COZE_DEFAULT_WORKFLOW_ID'),
-      timeout: this.configService.get<number>('COZE_TIMEOUT', 30000),
+      public_key_id: this.configService.get<string>('COZE_PUBLIC_KEY_ID'),
+      timeout: 30000,
     };
 
-    if (!this.config.apiKey) {
+    if (!this.config.private_key) {
       throw new Error('COZE_API_KEY环境变量未配置');
     }
 
     // 创建HTTP客户端
     this.httpClient = axios.create({
-      baseURL: this.config.baseUrl,
+      baseURL: this.config.coze_api_base ,
       timeout: this.config.timeout,
       headers: {
         'Content-Type': 'application/json',
@@ -81,36 +86,25 @@ export class CozeService {
    * @param durationSeconds - 令牌有效期（秒）
    * @returns 访问令牌
    */
-  async getAccessToken(durationSeconds: number = 86399): Promise<string> {
+  async getAccessToken(): Promise<string> {
     // 检查是否有有效的令牌
-    if (this.accessToken && Date.now() < this.tokenExpiresAt) {
+    if (this.accessToken && Date.now() < this.tokenExpiresAt *1000) {
       return this.accessToken;
     }
 
     try {
-      const authRequest: CozeAuthRequest = {
-        duration_seconds: durationSeconds,
-        grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      };
-
-      const response: AxiosResponse<CozeAuthResponse> = await this.httpClient.post(
-        '/api/permission/oauth2/token',
-        authRequest,
-        {
-          headers: {
-            Authorization: `Bearer ${this.config.apiKey}`,
-          },
-        },
-      );
-
-      const { access_token, expires_in } = response.data;
-      
-      // 缓存令牌和过期时间
-      this.accessToken = access_token;
-      this.tokenExpiresAt = Date.now() + (expires_in - 60) * 1000; // 提前60秒过期
-
-      this.logger.log('成功获取Coze访问令牌');
-      return access_token;
+      let jwtToken = await getJWTToken({
+        baseURL: this.config.coze_api_base || 'https://api.coze.cn' ,
+        appId: this.config.client_id,
+        aud: new URL(this.config.coze_api_base || 'https://api.coze.cn').host,
+        keyid: this.config.public_key_id,
+        privateKey: this.config.private_key
+      });
+      this.accessToken  = jwtToken.access_token
+      this.tokenExpiresAt = jwtToken.expires_in
+      console.log('getJWTToken', jwtToken);
+     
+      return jwtToken.access_token;
     } catch (error) {
       this.logger.error('获取Coze访问令牌失败:', error.response?.data || error.message);
       throw new InternalServerErrorException('获取Coze访问令牌失败');
@@ -202,19 +196,19 @@ export class CozeService {
    * @param executeId - 执行ID
    * @returns 工作流状态响应
    */
-  async getWorkflowStatus(executeId: string): Promise<CozeWorkflowStatusResponse> {
+  async getWorkflowStatus(workflow_id: string , executeId: string): Promise<CozeWorkflowStatusResponse> {
     try {
       const accessToken = await this.getAccessToken();
-
+      
+        //   /v1/workflows/{{workflow_id}}/run_histories/{{execute_id}}
       const response: AxiosResponse<CozeWorkflowStatusResponse> = await this.httpClient.get(
-        `/v1/workflow/run/${executeId}`,
+        `/v1/workflows/${workflow_id}/run_histories/${executeId}`,    
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         },
       );
-
       return response.data;
     } catch (error) {
       this.logger.error('查询工作流状态失败:', error.response?.data || error.message);
@@ -230,6 +224,7 @@ export class CozeService {
    * @returns 最终的工作流状态响应
    */
   async waitForWorkflowCompletion(
+    workflow_id:string,
     executeId: string,
     maxWaitTime: number = 300000, // 默认5分钟
     pollInterval: number = 2000, // 默认2秒
@@ -237,7 +232,7 @@ export class CozeService {
     const startTime = Date.now();
     
     while (Date.now() - startTime < maxWaitTime) {
-      const status = await this.getWorkflowStatus(executeId);
+      const status = await this.getWorkflowStatus(workflow_id, executeId);
       
       if (status.status === 'success' || status.status === 'failed') {
         return status;

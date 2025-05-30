@@ -28,6 +28,10 @@ export class Creation {
   @Column({ length: 100 })
   title: string;
 
+  @ApiProperty({ description: '作品标题' })
+  @Column({ length: 100 })
+  type: string; // 表情包， txt2Image，editImage, face2Image, emoji,bg,
+
   @ApiProperty({ description: '提示词内容' })
   @Column({ type: 'text' })
   prompt: string;
