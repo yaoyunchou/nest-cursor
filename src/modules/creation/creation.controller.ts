@@ -72,7 +72,7 @@ export class CreationController {
   @ApiOperation({ summary: '分页查询作品列表' })
   @ApiResponse({ status: 200, description: '查询成功', type: [Creation] })
   async findAll(
-    @Query() query: QueryCreationDto,
+    @Query() query: QueryCollectionDto,
     @Request() req?: any, // 临时处理
   ): Promise<PaginatedResponse<Creation>> {
     const currentUserId = req?.user?.id;
@@ -86,8 +86,11 @@ export class CreationController {
   @ApiOperation({ summary: '获取公开作品广场列表' })
   @ApiResponse({ status: 200, description: '查询成功', type: [Creation] })
   async findPublicCreations(
-    @Query() query: QueryCreationDto,
+    @Query() query: QueryCollectionDto,
   ): Promise<PaginatedResponse<Creation>> {
+    // 将参数转为number 类型
+    query.page = Number(query.page) || 0 ;
+    query.pageSize = Number(query.pageSize) || 10;
     return this.creationService.findPublicCreations(query);
   }
 

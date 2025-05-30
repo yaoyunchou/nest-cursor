@@ -32,6 +32,11 @@ export class Creation {
   @Column({ length: 100 })
   type: string; // 表情包， txt2Image，editImage, face2Image, emoji,bg,
 
+  // 作品添加一个审核字段， 是否审核通过， 用于审核发布的产品
+  @ApiProperty({ description: '是否审核通过', default: false })
+  @Column({ default: false })
+  isAudit: boolean;
+  
   @ApiProperty({ description: '提示词内容' })
   @Column({ type: 'text' })
   prompt: string;
@@ -40,9 +45,10 @@ export class Creation {
   @Column({ type: 'simple-array', nullable: true })
   images: string[];
 
-  @ApiProperty({ description: '是否公开到广场', default: false })
-  @Column({ default: false })
-  isPublic: boolean;
+  // status 状态 0 草稿  1 发布  2  私密（默认图片修复和换脸为私密发布的), 可以为空
+  @ApiProperty({ description: '作品状态',  })
+  @Column({ nullable: true })  
+  status: number;
 
   @ApiProperty({ description: '点赞数', default: 0 })
   @Column({ default: 0 })

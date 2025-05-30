@@ -37,7 +37,7 @@ export class QueryCreationDto {
   @ApiProperty({ description: '是否公开', required: false, example: true })
   @IsOptional()
   @IsBoolean({ message: '公开状态必须是布尔值' })
-  isPublic?: boolean;
+  status?: number;
 
   @ApiProperty({ description: '创建人ID', required: false, example: 1 })
   @IsOptional()
@@ -45,16 +45,7 @@ export class QueryCreationDto {
   @IsNumber({}, { message: '创建人ID必须是数字' })
   user?: User;
 
-  @ApiProperty({ 
-    description: '排序字段', 
-    enum: SortField, 
-    required: false, 
-    default: SortField.CREATED_AT,
-    example: SortField.CREATED_AT
-  })
-  @IsOptional()
-  @IsEnum(SortField, { message: '排序字段必须是有效值' })
-  sortField?: SortField = SortField.CREATED_AT;
+
 
   @ApiProperty({ 
     description: '排序顺序', 
@@ -80,5 +71,5 @@ export class QueryCreationDto {
   @IsNumber({}, { message: '每页数量必须是数字' })
   @Min(1, { message: '每页数量必须大于0' })
   @Max(100, { message: '每页数量不能超过100' })
-  limit?: number = 10;
+  pageSize?: number = 10;
 } 

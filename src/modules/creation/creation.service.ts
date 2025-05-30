@@ -48,22 +48,24 @@ export class CreationService {
    * @param currentUserId - 当前用户ID（用于权限控制）
    * @returns 分页后的作品列表
    */
-  async findAll(query: QueryCreationDto, currentUserId?: number): Promise<PaginatedResponse<Creation>> {
-    const { title, prompt, isPublic, user, sortField, sortOrder, page, limit } = query;
+  async findAll(query: QueryCreationDto, currentUserId?: number, isAdmin: boolean=true): Promise<PaginatedResponse<Creation>> {
+    const { title, prompt, status, user, page, pageSize } = query;
     
     // 创建查询构建器
-    const queryBuilder = this.creationRepository.createQueryBuilder('creation')
-      .leftJoinAndSelect('creation.user', 'user');
+    const queryBuilder = this.creationRepository.createQueryBuilder('creation');
+    if (isAdmin) {
+      queryBuilder.leftJoinAndSelect('creation.user', 'user');
+    }
 
     // 权限控制：如果不是查询自己的作品，只能查看公开作品
     if (user && user.id !== currentUserId) {
-      queryBuilder.andWhere('creation.isPublic = :isPublic', { isPublic: true });
+      queryBuilder.andWhere('creation.status = :status', { status: 1 });
     } else if (!user && currentUserId) {
       // 如果没有指定userId但有当前用户，查询当前用户的所有作品
       queryBuilder.andWhere('creation.userId = :currentUserId', { currentUserId });
     } else if (!user && !currentUserId) {
       // 如果都没有指定，只查询公开作品
-      queryBuilder.andWhere('creation.isPublic = :isPublic', { isPublic: true });
+      queryBuilder.andWhere('creation.status = :status', { status: 1 });
     }
 
     // 按标题模糊查询
@@ -77,8 +79,8 @@ export class CreationService {
     }
 
     // 按公开状态筛选
-    if (isPublic !== undefined) {
-      queryBuilder.andWhere('creation.isPublic = :isPublic', { isPublic });
+    if (status !== undefined) {
+      queryBuilder.andWhere('creation.status = :status', { status });
     }
 
     // 按指定用户筛选
@@ -86,12 +88,11 @@ export class CreationService {
       queryBuilder.andWhere('creation.user.id = :userId', { userId: user.id });
     }
 
-    // 排序
-    queryBuilder.orderBy(`creation.${sortField}`, sortOrder);
+
 
     // 分页
-    const skip = (page - 1) * limit;
-    queryBuilder.skip(skip).take(limit);
+    const skip = (page - 1) * pageSize;
+    queryBuilder.skip(skip).take(pageSize);
 
     // 执行查询
     const [list, total] = await queryBuilder.getManyAndCount();
@@ -99,7 +100,7 @@ export class CreationService {
     return {
       list,
       total,
-      pageSize: limit,
+      pageSize: pageSize,
       pageIndex: page,
     };
   }
@@ -110,8 +111,8 @@ export class CreationService {
    * @returns 公开作品列表
    */
   async findPublicCreations(query: QueryCreationDto): Promise<PaginatedResponse<Creation>> {
-    const queryWithPublic = { ...query, isPublic: true };
-    return this.findAll(queryWithPublic);
+    const queryWithPublic = { ...query, status: 1 };
+    return this.findAll(queryWithPublic, null, false);
   }
 
   /**
@@ -131,7 +132,7 @@ export class CreationService {
     }
 
     // 权限控制：只有创建者可以查看私有作品
-    if (!creation.isPublic && creation.user.id !== currentUserId) {
+    if (creation.status !== 1 && creation.user.id !== currentUserId) {
       throw new ForbiddenException('无权查看此作品');
     }
 
@@ -193,8 +194,7 @@ export class CreationService {
       throw new ForbiddenException('无权修改此作品的公开状态');
     }
 
-    creation.isPublic = !creation.isPublic;
-    
+    creation.status = 2;
     return await this.creationRepository.save(creation);
   }
 
@@ -208,7 +208,7 @@ export class CreationService {
     const creation = await this.findOne(id);
     
     // 验证作品是否公开
-    if (!creation.isPublic) {
+    if (creation.status !==1) {
       throw new ForbiddenException('只能对公开作品进行点赞');
     }
 
@@ -233,7 +233,7 @@ export class CreationService {
     const creation = await this.findOne(id);
     
     // 验证作品是否公开
-    if (!creation.isPublic) {
+    if (creation.status !== 1) {
       throw new ForbiddenException('只能对公开作品取消点赞');
     }
 
@@ -258,7 +258,7 @@ export class CreationService {
     const creation = await this.findOne(id);
     
     // 验证作品是否公开
-    if (!creation.isPublic) {
+    if (creation.status !== 1) {
       throw new ForbiddenException('只能收藏公开的作品');
     }
 
@@ -321,7 +321,7 @@ export class CreationService {
    * @returns 用户收藏的作品列表
    */
   async getUserCollections(userId: number, query: QueryCollectionDto): Promise<PaginatedResponse<UserCollection>> {
-    const { page, limit } = query;
+    const { page, pageSize } = query;
     
     // 创建查询构建器
     const queryBuilder = this.userCollectionRepository.createQueryBuilder('collection')
@@ -332,8 +332,8 @@ export class CreationService {
       .orderBy('collection.createdAt', 'DESC');
 
     // 分页
-    const skip = (page - 1) * limit;
-    queryBuilder.skip(skip).take(limit);
+    const skip = (page - 1) * pageSize;
+    queryBuilder.skip(skip).take(pageSize);
 
     // 执行查询
     const [list, total] = await queryBuilder.getManyAndCount();
@@ -341,7 +341,7 @@ export class CreationService {
     return {
       list,
       total,
-      pageSize: limit,
+      pageSize: pageSize,
       pageIndex: page,
     };
   }

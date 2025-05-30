@@ -31,5 +31,5 @@ export class QueryCollectionDto {
   @IsNumber({}, { message: '每页数量必须是数字' })
   @Min(1, { message: '每页数量必须大于0' })
   @Max(100, { message: '每页数量不能超过100' })
-  limit?: number = 10;
+  pageSize?: number = 10;
 } 
