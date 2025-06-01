@@ -12,6 +12,11 @@ export class WechatLoginDto {
   @IsOptional()
   username: string; 
 
+  @ApiProperty({ description: '用户名' })
+  @IsString()
+  @IsOptional()
+  phone: string; 
+
   @ApiProperty({ description: '头像' })
   @IsString()
   @IsOptional()

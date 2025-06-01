@@ -11,8 +11,6 @@ import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import * as FormData from 'form-data';
 import {
-  CozeAuthRequest,
-  CozeAuthResponse,
   CozeFileUploadResponse,
   CozeWorkflowRunRequest,
   CozeWorkflowRunResponse,
@@ -21,6 +19,7 @@ import {
   CozeConfig,
 } from '../interfaces/coze.interface';
 import { getJWTToken } from '@coze/api';
+import { getCozeOutput } from '../utils';
 
 @Injectable()
 export class CozeService {
@@ -209,7 +208,10 @@ export class CozeService {
           },
         },
       );
-      return response.data;
+      const backData =  response.data.data[0];
+      // 处理输出的内容
+      backData.images= getCozeOutput(backData.output)
+      return backData;
     } catch (error) {
       this.logger.error('查询工作流状态失败:', error.response?.data || error.message);
       throw new InternalServerErrorException('查询工作流状态失败');

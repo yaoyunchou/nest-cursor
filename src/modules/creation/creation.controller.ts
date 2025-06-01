@@ -38,9 +38,12 @@ import {
   CozeWorkflowStatusResponse,
   CozeFileUploadResponse,
 } from './interfaces/coze.interface';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator'
 
 @ApiTags('创作管理')
 @Controller('creations')
+@UseGuards(JwtAuthGuard)
 export class CreationController {
   constructor(
     private readonly creationService: CreationService,
@@ -67,7 +70,9 @@ export class CreationController {
 
   /**
    * 分页查询作品列表
+   * 这个不需要权限认证
    */
+  @Public()
   @Get()
   @ApiOperation({ summary: '分页查询作品列表' })
   @ApiResponse({ status: 200, description: '查询成功', type: [Creation] })
@@ -82,6 +87,7 @@ export class CreationController {
   /**
    * 获取公开作品广场列表
    */
+  @Public()
   @Get('public')
   @ApiOperation({ summary: '获取公开作品广场列表' })
   @ApiResponse({ status: 200, description: '查询成功', type: [Creation] })
@@ -97,6 +103,7 @@ export class CreationController {
   /**
    * 获取作品详情
    */
+  @Public()
   @Get(':id')
   @ApiOperation({ summary: '获取作品详情' })
   @ApiParam({ name: 'id', description: '作品ID', type: 'number' })
