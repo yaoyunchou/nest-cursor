@@ -88,6 +88,11 @@ export class CreationService {
       queryBuilder.andWhere('creation.user.id = :userId', { userId: user.id });
     }
 
+    // 按排序字段进行排序
+    if (query.sort) {
+      queryBuilder.orderBy(`creation.${query.sort}`, query.sortOrder);
+    }
+
 
 
     // 分页
