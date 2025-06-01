@@ -45,7 +45,10 @@ export class QueryCreationDto {
   @IsNumber({}, { message: '创建人ID必须是数字' })
   user?: User;
 
-
+  @ApiProperty({ description: '排序字段', required: false, example: SortField.CREATED_AT })
+  @IsOptional()
+  @IsEnum(SortField, { message: '排序字段必须是有效值' })
+  sort?: SortField = SortField.CREATED_AT;
 
   @ApiProperty({ 
     description: '排序顺序', 

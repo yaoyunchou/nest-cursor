@@ -30,6 +30,29 @@ export class CreateUserDto {
   @IsOptional()
   avatar?: string;
 
+  @ApiProperty({ description: '地址', required: false })
+  @IsArray()
+  @IsOptional()
+  address?: number[];
+
+  
+  @ApiProperty({ description: '地址文本', required: false })
+  @IsString()
+  @IsOptional()
+  addressText?: string;
+
+  // gender
+  @ApiProperty({ description: '性别', required: false })
+  @IsString()
+  @IsOptional()
+  gender?: string;
+
+
+  @ApiProperty({ description: '生日', required: false })
+  @IsString()
+  @IsOptional()
+  birth?: string;
+
   @ApiProperty({ description: '状态', default: 1 })
   @IsNumber()
   @IsOptional()

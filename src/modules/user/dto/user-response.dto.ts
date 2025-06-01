@@ -10,8 +10,21 @@ export class UserResponseDto {
   @ApiProperty({ description: '用户名' })
   username: string;
 
+  @ApiProperty({ description: '性别' })
+  gender: string;
+
+
   @ApiProperty({ description: '邮箱' })
   email: string;
+
+  @ApiProperty({ description: '地址' })
+  address: number[];
+
+  @ApiProperty({ description: '地址文本' })
+  addressText: string;
+
+  @ApiProperty({ description: '生日' })
+  birth: string; 
 
   @ApiProperty({ description: '状态', enum: [0, 1], default: 1 })
   status: number;

@@ -113,7 +113,11 @@ export class AuthService {
           username: username || `wx_${openid.slice(-8)}`, // 生成一个默认用户名
           avatar: avatar || '',
           phone:phone ||'',
-          password: '', // 微信用户无密码
+          gender:'',
+          password: '', // 微信用户无密码	
+          address: [],
+          addressText: '',
+          birth: '',
         });
       }
 

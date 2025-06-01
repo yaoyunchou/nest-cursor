@@ -29,6 +29,10 @@ export class User {
   @Column({ unique: true })
   username: string;
 
+  @ApiProperty({ description: '性别'})
+  @Column({ unique:false})
+  gender: string;
+
   @ApiProperty({ description: '邮箱' })
   @Column({ nullable: true })
   email: string;
@@ -48,6 +52,19 @@ export class User {
   @ApiProperty({ description: '备注' })
   @Column({ nullable: true })
   remark: string;
+
+  @ApiProperty({ description: '地址' })
+  @Column('json', { nullable: true })
+  address: number[];
+
+  @ApiProperty({ description: '地址文本' })
+  @Column({ nullable: true })
+  addressText: string;
+
+  @ApiProperty({ description: '生日' })
+  @Column({ nullable: true })
+  birth: string;
+
 
   
   @ApiProperty({ description: '手机' })

@@ -13,7 +13,7 @@ import { Creation } from './entities/creation.entity';
 import { UserCollection } from './entities/user-collection.entity';
 import { CreateCreationDto } from './dto/create-creation.dto';
 import { UpdateCreationDto } from './dto/update-creation.dto';
-import { QueryCreationDto } from './dto/query-creation.dto';
+import { QueryCreationDto, SortField, SortOrder } from './dto/query-creation.dto';
 import { QueryCollectionDto } from './dto/query-collection.dto';
 import { PaginatedResponse } from '../../shared/interfaces/pagination.interface';
 
@@ -112,6 +112,9 @@ export class CreationService {
    */
   async findPublicCreations(query: QueryCreationDto): Promise<PaginatedResponse<Creation>> {
     const queryWithPublic = { ...query, status: 1 };
+    // 希望安装createAt 来进行排序
+    queryWithPublic.sort = SortField.CREATED_AT;
+    queryWithPublic.sortOrder= SortOrder.DESC;
     return this.findAll(queryWithPublic, null, false);
   }
 
