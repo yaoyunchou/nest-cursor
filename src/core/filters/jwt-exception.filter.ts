@@ -11,14 +11,11 @@ export class JwtExceptionFilter implements ExceptionFilter {
     const exceptionResponse = exception.getResponse();
     // console.log('----------status------exceptionResponse-----', status, exceptionResponse);
     // 检查是否是JWT相关错误
-    const isJwtError = exception.message.includes('jwt') || 
-                       exception.message.includes('unauthorized') ||
-                       exception.message.includes('token');
     
-                       
-    if(isJwtError){
-      response.status(HttpStatus.OK).json({
-        code: HttpStatus.FORBIDDEN,
+               
+    if(status === 401 || status === 403){
+      response.status(status).json({
+        code: HttpStatus.UNAUTHORIZED,
         message: '登录信息无效或已过期，请重新登录',
         data: null,
         path: request.url,
