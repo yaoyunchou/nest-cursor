@@ -17,7 +17,10 @@ import {
   UploadedFile,
   ParseIntPipe,
   UseGuards,
-  Request
+  Request,
+  BadRequestException,
+  Response as ExpressResponse,
+  Res
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -28,6 +31,7 @@ import { QueryFileDto } from './dto/query-file.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { PaginatedResponse } from '../../shared/interfaces/pagination.interface';
 import { Public } from '../auth/decorators/public.decorator';
+import type { Response as ExpressResponseType } from 'express';
 
 @ApiTags('文件管理')
 @ApiBearerAuth()
@@ -89,4 +93,30 @@ export class FileController {
   getUploadToken(): string {
     return this.fileService.getUploadToken();
   }
+  // 图片文件访问代理， 通过传入的url返回当前url返回的内容，一般是图片内容
+  @ApiOperation({ summary: '图片文件访问代理' })
+  @Get('coze/proxy')
+  @Public() // 将此接口加入白名单,不需要授权
+  async proxyImage(@Query('url') url: string, @Res() res: ExpressResponseType): Promise<void> {
+    try {
+      // 验证URL是否合法
+      if (!url || !url.match(/^https?:\/\/.+/)) {
+        throw new BadRequestException('无效的URL');
+      }
+      // 获取远程图片
+      const fetchResponse = await fetch(url);
+      if (!fetchResponse.ok || !fetchResponse.body) {
+        throw new BadRequestException('获取图片失败');
+      }
+      res.set('Content-Type', fetchResponse.headers.get('content-type') || 'application/octet-stream');
+      // Web Streams API -> Node.js stream
+      const nodeStream = require('stream').Readable.fromWeb(fetchResponse.body);
+      nodeStream.pipe(res);
+    } catch (error) {
+      throw new BadRequestException('获取图片失败');
+    }
+  }
+
+
+
 } 
