@@ -17,4 +17,9 @@ export class UserActionRecordDto {
   /** 打卡日期（YYYY-MM-DD） */
   @ApiProperty({ description: '打卡日期' })
   date: string;
+
+  /** 连续打卡次数 */ 
+  @ApiProperty({ description: '连续打卡次数' })
+  continuousCheckInCount: number;
+
 } 

@@ -83,6 +83,7 @@ export class UserActionService {
       type: entity.type,
       checkInTime: dayjs(entity.checkInTime).format('YYYY-MM-DD HH:mm:ss'),
       date: dayjs(entity.date).format('YYYY-MM-DD'),
+      continuousCheckInCount:entity.continuousCheckInCount
     };
   }
 } 
