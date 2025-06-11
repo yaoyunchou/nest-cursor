@@ -21,6 +21,7 @@ import { CreationModule } from './modules/creation/creation.module';
 import { CoreModule } from './core/core.module';
 import { LowcodeModule } from './modules/lowcode/lowcode.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
+import { UserActionModule } from './modules/userAction/user-action.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { NavigationModule } from './modules/navigation/navigation.module';
     CoreModule,
     LowcodeModule,
     NavigationModule,
+    UserActionModule,
   ],
   controllers: [HealthController],
 })

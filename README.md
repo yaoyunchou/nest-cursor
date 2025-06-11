@@ -134,6 +134,13 @@
    - 使用DTO进行数据验证
    - 统一的错误处理
 
+### 2025-01-22
+
+1. userAction模块实体已从MikroORM风格迁移为TypeORM风格：
+   - 主键改为自增ID（number类型）。
+   - 其余字段类型和注释保持一致。
+   - 统一使用TypeORM的@Entity、@PrimaryGeneratedColumn、@Column装饰器。
+
 ## API功能
 
 项目是分模块开发的， 每个模块都有自己的controller, service, entity, dto, interface, module, test。和对应的单元测试。 可以参考src/user 目录下的文件，做新的模块开发。
