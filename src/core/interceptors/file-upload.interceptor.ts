@@ -20,6 +20,6 @@ export const imageUploadConfig = {
     callback(null, true);
   },
   limits: {
-    fileSize: 1024 * 1024 * 5, // 5MB
+    fileSize: 1024 * 1024 * 50, // 50MB
   },
 }; 
