@@ -25,6 +25,6 @@ export class CheckInDto {
 
   /** 打卡时间（ISO8601字符串） */
   @ApiProperty({ description: '打卡时间' })
-  @IsISO8601({}, { message: '打卡时间格式不正确' })
+  @IsString({ message: '打卡时间格式不正确' })
   checkInTime: string;
 } 

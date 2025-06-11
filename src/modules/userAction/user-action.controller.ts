@@ -1,9 +1,20 @@
-import { Controller, Post, Get, Body, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Query, UseGuards, Req, createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserActionService } from './user-action.service';
 import { CheckInDto } from './dto/check-in.dto';
 import { UserActionRecordDto } from './dto/user-action-record.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { userInfo } from 'os';
+
+/**
+ * 获取当前登录用户的装饰器
+ */
+export const CurrentUser = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request = ctx.switchToHttp().getRequest();
+    return request.user;
+  },
+);
 
 /**
  * 用户打卡控制器
@@ -22,11 +33,9 @@ export class UserActionController {
   @ApiOperation({ summary: '用户打卡' })
   @ApiResponse({ type: UserActionRecordDto, description: '打卡记录响应' })
   @Post('check-in')
-  async executeCheckIn(@Body() checkInDto: CheckInDto, @Req() request: Request): Promise<UserActionRecordDto> {
-    // 用户id 直接从jwt中获取， 
-    const user = request.user as any;
-    checkInDto.userId = user.id;
-
+  async executeCheckIn(@Body() checkInDto: CheckInDto, @CurrentUser() user: any): Promise<UserActionRecordDto> {
+    // 用户id 直接从jwt中获取
+    checkInDto.userId = user.userId;
     return this.userActionService.executeCheckIn(checkInDto);
   }
 
@@ -38,7 +47,9 @@ export class UserActionController {
   @ApiOperation({ summary: '查询用户打卡记录' })
   @ApiResponse({ type: [UserActionRecordDto], description: '打卡记录列表' })
   @Get('records')
-  async getRecords(@Query('userId') userId: string, @Query('date') date?: string): Promise<UserActionRecordDto[]> {
+  async getRecords(@CurrentUser() user: any, @Query('date') date?: string): Promise<UserActionRecordDto[]> {
+    const userId = user.userId;
+    console.log(userId);
     return this.userActionService.getRecords({ userId, date });
   }
 } 

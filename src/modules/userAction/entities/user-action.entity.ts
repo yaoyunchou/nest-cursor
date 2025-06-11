@@ -32,7 +32,7 @@ export class UserActionEntity {
   /** 打卡时间（ISO8601字符串） */
   @ApiProperty({ description: '打卡时间' })
   @Column()
-  checkInTime: string;
+  checkInTime: Date;
 
   /** 打卡日期（YYYY-MM-DD） */
   @ApiProperty({ description: '打卡日期' })
@@ -43,6 +43,11 @@ export class UserActionEntity {
   @ApiProperty({ description: '创建时间' })
   @CreateDateColumn()
   createdAt: Date;
+
+  /** 连续打卡次数 */
+  @ApiProperty({ description: '连续打卡次数', default: 1 })
+  @Column()
+  continuousCheckInCount: number;
 
   /** 更新时间 */
   @ApiProperty({ description: '更新时间' })

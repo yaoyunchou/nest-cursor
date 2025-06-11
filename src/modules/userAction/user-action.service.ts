@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { UserActionEntity } from './entities/user-action.entity';
 import { CheckInDto, CheckInType } from './dto/check-in.dto';
 import { UserActionRecordDto } from './dto/user-action-record.dto';
+const dayjs = require('dayjs')
 
 /**
  * 用户打卡服务
@@ -23,19 +24,37 @@ export class UserActionService {
    */
   async executeCheckIn(checkInDto: CheckInDto): Promise<UserActionRecordDto> {
     const { userId, type, checkInTime } = checkInDto;
-    const date = checkInTime.split('T')[0];
+    console.log(checkInTime);
+    const format = 'YYYY-MM-DD';
+    const date =  dayjs(checkInTime).format(format);
+    // 判断date是否是今天
+    const today = dayjs().format(format);
+    if (date !== today) {
+      throw new BadRequestException('打卡日期不是今天，打卡失败！');
+    }
     // 检查当天该时段是否已打卡
     const exist = await this.userActionRepository.findOne({
       where: { userId, type, date },
     });
+
+    // 获取上一个打卡记录
+    const previousRecords = await this.userActionRepository.findOne({
+      where: { userId, type, date: dayjs(date).subtract(1, 'day').format(format) },
+    });
+    let continuousCheckInCount = 1;
+    if(previousRecords) {
+      continuousCheckInCount = previousRecords.continuousCheckInCount + 1;
+    }
     if (exist) {
-      throw new BadRequestException('当天该时段已打卡');
+      // 当前打卡时间是否连续， 例如今天打卡日期是 06-11， 那么需要看6-11之前有多少个打卡记录， 并且日期还需要是联系的
+      return this.toRecordDto(exist);
     }
     const record = this.userActionRepository.create({
       userId,
       type,
       checkInTime,
       date,
+      continuousCheckInCount,
     });
     const saved = await this.userActionRepository.save(record);
     return this.toRecordDto(saved);
@@ -62,8 +81,8 @@ export class UserActionService {
     return {
       userId: entity.userId,
       type: entity.type,
-      checkInTime: entity.checkInTime,
-      date: entity.date,
+      checkInTime: dayjs(entity.checkInTime).format('YYYY-MM-DD HH:mm:ss'),
+      date: dayjs(entity.date).format('YYYY-MM-DD'),
     };
   }
 } 
