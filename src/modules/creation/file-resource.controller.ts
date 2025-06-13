@@ -5,6 +5,7 @@ import { UpdateFileResourceDto } from './dto/update-file-resource.dto';
 import { QueryFileResourceDto } from './dto/query-file-resource.dto';
 import { FileResource } from './entities/file-resource.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ListResponse } from '@/models/list-response.model';
 
 /**
  * 图片资源接口
@@ -108,5 +109,23 @@ export class FileResourceController {
   @ApiOkResponse({ description: '查询成功', type: [FileResource] })
   async getHotList(@Query('limit') limit?: number): Promise<FileResource[]> {
     return this.fileResourceService.getHotFileResources(limit);
+  }
+  /** 根据时间返回scene 为早安和晚安的相关资源， 返回对应的推荐资源
+   *  传入page pageSize 返回对应的推荐资源
+   */
+  @Get('recommend/list')
+  @ApiOperation({ summary: '根据时间返回scene 为早安和晚安的相关资源， 返回对应的推荐资源' })
+  @ApiQuery({ name: 'page', required: false, description: '页码' })
+  @ApiQuery({ name: 'pageSize', required: false, description: '每页条数' })
+  @ApiOkResponse({ description: '查询成功', type: [FileResource] })
+  async getRecommendList(@Query('page') page?: number, @Query('pageSize') pageSize?: number): Promise<ListResponse<FileResource>> {
+    const {list, scene} = await this.fileResourceService.getRecommendFileResources(page, pageSize);
+    return {
+      total: list.length,
+      page: 1,
+      pageSize: list.length,
+      list,
+      scene,
+    };
   }
 } 

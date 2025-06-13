@@ -11,4 +11,6 @@ export interface ListResponse<T> {
   pageSize: number;
   /** 列表数据 */
   list: T[];
+  /** 其他数据 */
+  [key: string]: any;
 } 

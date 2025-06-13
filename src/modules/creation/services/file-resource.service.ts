@@ -6,6 +6,7 @@ import { CreateFileResourceDto } from '../dto/create-file-resource.dto';
 import { UpdateFileResourceDto } from '../dto/update-file-resource.dto';
 import { QueryFileResourceDto } from '../dto/query-file-resource.dto';
 import { ListResponse } from '../../../models/list-response.model';
+import * as dayjs from 'dayjs';
 
 /**
  * 图片资源服务
@@ -82,4 +83,26 @@ export class FileResourceService {
       take: limit,
     });
   }
-} 
+  /** 根据时间返回scene 为早安和晚安的相关资源， 返回对应的推荐列表资源 */
+  async getRecommendFileResources(page: number = 1, pageSize: number = 100): Promise<{list: FileResource[], scene: string}> {
+    const where: any = {};  
+    // 判断当前时间，如果是4:00~12点为早上，12:00~18点为下午，18:00~24点为晚上 ， 使用dayjs
+    const now = dayjs();
+    const hour = now.hour();
+    console.log(hour);
+    let currentScene = '';
+    if (hour >= 4 && hour < 12) {
+      where.scene = In(['早安']);
+      currentScene = '早安';
+    } else if (hour >= 18 && hour < 24) {
+      where.scene = In(['晚安']);
+      currentScene = '晚安';
+    }
+    // 排序方式是以权重排序， 权重越大， 越靠前， 如果权重一样，则以更新时间排序
+    const list = await this.fileResourceRepository.find({ where, order: { weight: 'DESC', updatedAt: 'DESC' }, skip: (page - 1) * pageSize, take: pageSize });
+    return {
+      list,
+      scene: currentScene,
+    };
+  }
+}
