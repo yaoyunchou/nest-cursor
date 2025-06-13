@@ -14,14 +14,17 @@ import { CozeService } from './services/coze.service';
 import { CreationController } from './creation.controller';
 import { Creation } from './entities/creation.entity';
 import { UserCollection } from './entities/user-collection.entity';
+import { FileResource } from './entities/file-resource.entity';
+import { FileResourceService } from './services/file-resource.service';
+import { FileResourceController } from './file-resource.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Creation, UserCollection]),
+    TypeOrmModule.forFeature([Creation, UserCollection, FileResource]),
     ConfigModule, // 为了在CozeService中使用ConfigService
   ],
-  controllers: [CreationController],
-  providers: [CreationService, CozeService],
-  exports: [CreationService, CozeService],
+  controllers: [CreationController, FileResourceController],
+  providers: [CreationService, CozeService, FileResourceService],
+  exports: [CreationService, CozeService, FileResourceService],
 })
 export class CreationModule {} 
