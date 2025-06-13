@@ -103,6 +103,7 @@ export class FileResourceService {
     return {
       list,
       scene: currentScene,
+      
     };
   }
 }

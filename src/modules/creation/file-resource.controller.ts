@@ -126,6 +126,18 @@ export class FileResourceController {
       pageSize: list.length,
       list,
       scene,
+      descTextOptions : [
+        '早安，世界\n新的一天从微笑开始',
+        '你努力的样子\n真的很美',
+        '保持热爱\n奔赴山海',
+        '生活不止眼前的苟且\n还有诗和远方',
+        '每一天\n都是全新的自己',
+        '你要相信\n美好正在发生',
+        '愿你所愿\n终能实现',
+        '认真生活\n用心感受',
+        '未来可期\n不负韶华',
+        '你笑起来真好看\n像春风拂面',
+      ]
     };
   }
 } 
