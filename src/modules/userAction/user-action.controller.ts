@@ -47,7 +47,7 @@ export class UserActionController {
   @ApiOperation({ summary: '查询用户打卡记录' })
   @ApiResponse({ type: [UserActionRecordDto], description: '打卡记录列表' })
   @Get('records')
-  async getRecords(@CurrentUser() user: any, @Query('date') date?: string): Promise<UserActionRecordDto[]> {
+  async getRecords(@CurrentUser() user: any, @Query('date') date?: string): Promise<any> {
     const userId = user.userId;
     console.log(userId);
     return this.userActionService.getRecords({ userId, date });

@@ -250,3 +250,20 @@ test/ # 测试目录
 - multer
 - axios (Coze API调用)
 - form-data (文件上传)
+
+## 全局接口返回规范
+
+- 所有返回列表数据的接口，必须统一使用标准结构 `ListResponse<T>`。
+- 结构定义见：`src/models/list-response.model.ts`
+- 结构如下：
+
+```typescript
+export interface ListResponse<T> {
+  total: number; // 总条数
+  page: number; // 当前页码
+  pageSize: number; // 每页条数
+  list: T[]; // 列表数据
+}
+```
+
+- 所有Service和Controller返回列表时，均需严格遵循此结构。

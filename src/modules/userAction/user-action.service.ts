@@ -6,6 +6,15 @@ import { CheckInDto, CheckInType } from './dto/check-in.dto';
 import { UserActionRecordDto } from './dto/user-action-record.dto';
 const dayjs = require('dayjs')
 
+
+interface ListResponse<T> {
+  total: number;
+  page: number;
+  pageSize: number;
+  list: T;
+}
+
+
 /**
  * 用户打卡服务
  * 负责处理用户打卡的业务逻辑
@@ -61,16 +70,34 @@ export class UserActionService {
   }
 
   /**
-   * 查询用户打卡记录
+   * 查询用户打卡记录, 这里需要查询所有的打卡记录
+   * 如果date为空，则查询所有日期
+   * 如果date不为空，则查询该日期
    * @param params 查询参数
+   * @param params.userId 用户ID 可选
+   * @param params.date 日期 可选
    * @returns 打卡记录DTO数组
    */
-  async getRecords(params: { userId: string; date?: string }): Promise<UserActionRecordDto[]> {
-    const where: Record<string, any> = { userId: params.userId };
-    if (params.date) where.date = params.date;
+  async getRecords(params: { userId: string; date?: string, page?: number, pageSize?: number }): Promise<ListResponse<UserActionRecordDto[]>> {
+    const { userId, date, page, pageSize } = params;
+    const format = 'YYYY-MM-DD';
+    // 根据传入的参数组装查询条件， this.userActionRepository.findAll
+    const where: Record<string, any> = {};
+    if (userId) where.userId = userId;
+    if (date) where.date = date;
     const records = await this.userActionRepository.find({ where });
-    return records.map(r => this.toRecordDto(r));
+    const result = records.map(r => this.toRecordDto(r));
+    // totoal 总记录数, page, pageSize, data: result
+    return {
+    
+      total: records.length,  
+      page: page || 1,
+      pageSize: pageSize || 10, 
+      list: result
+    }
   }
+
+  
 
   /**
    * 实体转DTO
