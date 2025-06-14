@@ -339,6 +339,7 @@ export class CreationController {
   @ApiResponse({ status: 500, description: 'Coze服务错误' })
   // @UseGuards(JwtAuthGuard)
   // @ApiBearerAuth()
+  @Public()
   async uploadFileToCoze(
     @UploadedFile() file: Express.Multer.File,
   ): Promise<CozeFileUploadResponse> {
