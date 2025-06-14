@@ -21,7 +21,7 @@ import {
   UseInterceptors,
   UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiConsumes } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreationService } from './creation.service';
 import { CozeService } from './services/coze.service';
@@ -40,6 +40,7 @@ import {
 } from './interfaces/coze.interface';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator'
+import { UploadFileDto } from '../file/dto/upload-file.dto';
 
 @ApiTags('创作管理')
 @Controller('creations')
@@ -331,6 +332,7 @@ export class CreationController {
   @Post('coze/upload-file')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
+  @ApiBody({type: UploadFileDto})
   @ApiOperation({ summary: '上传文件到Coze' })
   @ApiResponse({ status: 201, description: '文件上传成功', type: Object })
   @ApiResponse({ status: 400, description: '文件参数错误' })
