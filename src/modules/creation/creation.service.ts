@@ -267,12 +267,12 @@ export class CreationService {
     
     // 验证作品是否公开
     if (creation.status !== 1) {
-      throw new ForbiddenException('只能收藏公开的作品');
+      throw new ConflictException('只能收藏公开的作品');
     }
 
     // 不能收藏自己的作品
     if (creation.user.id === userId) {
-      throw new ForbiddenException('不能收藏自己的作品');
+      throw new ConflictException('不能收藏自己的作品');
     }
 
     // 检查是否已经收藏
