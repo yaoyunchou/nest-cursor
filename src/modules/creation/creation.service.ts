@@ -331,12 +331,13 @@ export class CreationService {
   async getUserCollections(userId: number, query: QueryCollectionDto): Promise<PaginatedResponse<UserCollection>> {
     const { page, pageSize } = query;
     
-    // 创建查询构建器
+    // 创建查询构建器, user只展示id和username
     const queryBuilder = this.userCollectionRepository.createQueryBuilder('collection')
       .leftJoinAndSelect('collection.creation', 'creation')
-      .leftJoinAndSelect('creation.user', 'user')
+      .leftJoinAndSelect('creation.user', 'user', 'user.id = creation.userId')
+      .select(['collection.id', 'collection.createdAt', 'creation.id', 'creation.title', 'creation.images', 'creation.likes', 'creation.collections', 'user.id', 'user.username'])
       .where('collection.userId = :userId', { userId })
-      .andWhere('creation.isPublic = :isPublic', { isPublic: true }) // 只查询公开作品的收藏
+      .andWhere('creation.status = :status', { status: 1 }) // 只查询公开作品的收藏
       .orderBy('collection.createdAt', 'DESC');
 
     // 分页

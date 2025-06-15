@@ -41,6 +41,8 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator'
 import { UploadFileDto } from '../file/dto/upload-file.dto';
+import { CurrentUser } from '../userAction/user-action.controller';
+import { User } from '../user/entities/user.entity';
 
 @ApiTags('创作管理')
 @Controller('creations')
@@ -210,7 +212,7 @@ export class CreationController {
   // @ApiBearerAuth()
   async unlikeCreation(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @Request() req?: any, // 临时处理   
   ): Promise<Creation> {
     const userId = req?.user?.id || 1;
     return this.creationService.unlikeCreation(id, userId);
@@ -230,9 +232,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async collectCreation(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User,
   ): Promise<UserCollection> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     return this.creationService.collectCreation(id, userId);
   }
 
@@ -248,9 +250,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async uncollectCreation(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User,
   ): Promise<{ message: string }> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     await this.creationService.uncollectCreation(id, userId);
     return { message: '取消收藏成功' };
   }
@@ -258,14 +260,15 @@ export class CreationController {
   /**
    * 获取用户收藏列表
    */
-  @Get('users/:userId/collections')
+  @Get('users/personal/collections')
   @ApiOperation({ summary: '获取用户收藏列表' })
   @ApiParam({ name: 'userId', description: '用户ID', type: 'number' })
   @ApiResponse({ status: 200, description: '查询成功', type: [UserCollection] })
   async getUserCollections(
-    @Param('userId', ParseIntPipe) userId: number,
     @Query() query: QueryCollectionDto,
+    @CurrentUser() user: User,
   ): Promise<PaginatedResponse<UserCollection>> {
+    const userId = user?.id || 1;
     return this.creationService.getUserCollections(userId, query);
   }
 
