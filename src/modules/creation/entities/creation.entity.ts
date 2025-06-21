@@ -30,7 +30,12 @@ export class Creation {
 
   @ApiProperty({ description: '作品标题' })
   @Column({ length: 100 })
-  type: string; // 表情包， txt2Image，editImage, face2Image, emoji,bg,
+  type: string; 
+
+  // 表情包， txt2Image，editImage, face2Image, emoji,bg,
+  @ApiProperty({ description: '作品简介' })
+  @Column({ length: 100 })
+  doc: string; 
 
   // 作品添加一个审核字段， 是否审核通过， 用于审核发布的产品
   @ApiProperty({ description: '是否审核通过', default: false })
@@ -44,6 +49,18 @@ export class Creation {
   @ApiProperty({ description: '图片URL数组', type: [String] }) 
   @Column({ type: 'simple-array', nullable: true })
   images: string[];
+
+  @ApiProperty({ description: '图片URL数组Prompts', type: [String] }) 
+  @Column({ type: 'simple-array', nullable: true })
+  imagePrompts: string[];
+
+  @ApiProperty({ description: '视频URL数组', type: [String] }) 
+  @Column({ type: 'simple-array', nullable: true })
+  videos: string[];
+
+  @ApiProperty({ description: '音频URL数组', type: [String] }) 
+  @Column({ type: 'simple-array', nullable: true })
+  audios: string[];
 
   // status 状态 0 草稿  1 发布  2  私密（默认图片修复和换脸为私密发布的), 可以为空
   @ApiProperty({ description: '作品状态',  })

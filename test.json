@@ -1,0 +1,70 @@
+{
+    "url": "http://localhost:8080/api/v1/creations/internal-create",
+    "method": "POST",
+    "header": {
+      "Accept": "*/*",
+      "Connection": "keep-alive",
+      "Host": "localhost:8080",
+      "User-Agent": "Apifox/1.0.0 (https://apifox.com)"
+    },
+    "param": {},
+    "body": {
+      "audios": [
+        "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_7b12a56c-2d01-40a1-a3ab-81c3153ad0a5.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=o8YkBsuhgfg%2BJNYkXQ5NNPh8wWk%3D",
+        "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_e682e436-1d11-469d-9d9f-1d8f6c3c563e.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=NCtqCo68a6SnwO6hoDHck%2BSnwZM%3D",
+        "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_46f42595-c9ea-4532-8948-a9d8e24dfd3d.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=gOyiJ28AD8uAs55W6SDhHAYhMYw%3D",
+        "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_cee5cc64-f098-4d59-ac57-be376b1dbbd9.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=Yy6%2FUCiXbOtayy7G%2FpgEsllXxec%3D",
+        "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_8ee0693b-2b7d-41a9-b352-b839081310d0.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=33LXmq8vH5Jv1irDs%2B6htxiuEEg%3D",
+        "https://lf3-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_0ebb5cbc-8ac1-4757-a541-aaae840e8520.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=672TlXuSEAOBvv2T6s2mtjOlMs8%3D",
+        "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_42146519-266c-4b53-9d28-38897a37aa83.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=lsLVsNbmV%2BMQn%2B7%2B9hfdiiBxpnc%3D",
+        "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_4edcd90e-6699-4fb9-998c-298c0dff588c.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=Tsa3OvUVnzq6c0Iqkv5PPnIsHw8%3D",
+        "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_1cc5984a-ef05-4c9f-923d-cff6aa577a4c.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=2f1Sx%2BL1q915zgIYNlExVfQNlfY%3D",
+        "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_3f549a0b-845a-4cd9-8009-62ee12a77c14.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=WJkUYxxWRc3xTPKsk88xL3LQZsI%3D",
+        "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_05562ddc-62bc-4b4a-93b6-cc03ce9de61a.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=7hmnGEeCu42MRZlIQKAxlcBE1ic%3D",
+        "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_62ec2273-da27-4d1e-b43a-df0cd096b3c6.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=0chhJGmoW0CgS9WFKXMmvBPS6TE%3D",
+        "https://lf26-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_d33d7034-9fa5-4633-9f50-7b2d720dfc28.mp3?lk3s=da27ec82&x-expires=1750503343&x-signature=Jh6G7K52ByfVtnjI8Mkbf1hCHkE%3D",
+        "https://lf9-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_e4d08b69-d282-4484-ae74-0cfa50347f50.mp3?lk3s=da27ec82&x-expires=1750503344&x-signature=SLwTPxvXIaBJozZxSdFyvaHddmY%3D",
+        "https://lf6-appstore-sign.oceancloudapi.com/ocean-cloud-tos/VolcanoUserVoice/speech_7468512265151561755_f47adb2e-2572-4167-a403-8842d5f8031b.mp3?lk3s=da27ec82&x-expires=1750503344&x-signature=5KG%2FTeHxKpG%2F2jSTarzP8IdTc3U%3D"
+      ],
+      "doc": " 人生不过几十年，别为不值得的人伤神啦！谁都是第一次做人，不用讨好别人，爱谁谁，开心做自己就好！",
+      "imagePrompts": [
+        "阳光明媚的公园、年轻人、开心玩耍",
+        "海边、女孩、自由奔跑、享受生活",
+        "老人坐在摇椅上回忆、墙上挂着人生照片、几十年岁月感",
+        "女孩在落叶纷飞的树下、悲伤表情、远离不值得的人",
+        "职场办公室、员工低头、上级严厉目光、看人脸色",
+        "寄人篱下的小房间、男孩无奈表情、仰人鼻息",
+        "新生儿诞生场景、一家人开心、第一次做人",
+        "镜子前女孩、皱眉、委屈神情、拒绝委屈自己",
+        "社交场合、两人对立、一人不屑表情、不给别人脸",
+        "分岔路口、不同方向的人群、不是一路人",
+        "热闹聚会、有人转身离开、不往一地凑",
+        "繁华街道、年轻人独自前行、洒脱背影、爱谁谁",
+        "小镇街道、中年人忙碌工作、自己的生活节奏",
+        "山间小路、背包客、探索自己的道路",
+        "温馨卧室、女孩抱着玩偶、微笑、讨好自己"
+      ],
+      "images": [
+        "https://s.coze.cn/t/g1pDXB7uyEk/",
+        "https://s.coze.cn/t/VZ7DvXz_gLE/",
+        "https://s.coze.cn/t/_E7iMUns7Sc/",
+        "https://s.coze.cn/t/Qeu7XQSrw9w/",
+        "https://s.coze.cn/t/zfuGYE_iUNU/",
+        "https://s.coze.cn/t/Lw85ETn4M4Q/",
+        "https://s.coze.cn/t/RqTTOPUsKHM/",
+        "https://s.coze.cn/t/8chrJktOMBg/",
+        "https://s.coze.cn/t/aPCrLQC44b8/",
+        "https://s.coze.cn/t/1gxmWaTPYDA/",
+        "https://s.coze.cn/t/i6YFWyP8Z6M/",
+        "https://s.coze.cn/t/a_-vcY64SoQ/",
+        "https://s.coze.cn/t/wvPc8baloHM/",
+        "https://s.coze.cn/t/sJSlZIV6HPE/",
+        "https://s.coze.cn/t/3PhT997Dh9k/"
+      ],
+      "isPublic": false,
+      "prompt": "怎么开心，怎么活吧！\n人生短短几十年，\n干嘛为了不值得的人悲春伤秋，\n为何看人脸色，仰人鼻息呢？\n谁都是第一次做人，\n凭什么委屈自己，给别人脸，\n不是一路人，别往一地凑，\n爱谁谁，他有他的生活，\n你有你的路子，讨好自己就好",
+      "title": "人生短短，开心做自己超酷！",
+      "type": "coze"
+    },
+    "auth": null
+  }

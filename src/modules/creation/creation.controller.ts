@@ -20,8 +20,9 @@ import {
   ParseIntPipe,
   UseInterceptors,
   UploadedFile,
+  ConflictException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery, ApiConsumes, ApiBody, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CreationService } from './creation.service';
 import { CozeService } from './services/coze.service';
@@ -43,6 +44,7 @@ import { Public } from '../auth/decorators/public.decorator'
 import { UploadFileDto } from '../file/dto/upload-file.dto';
 import { CurrentUser } from '../userAction/user-action.controller';
 import { User } from '../user/entities/user.entity';
+import { userInfo } from 'os';
 
 @ApiTags('创作管理')
 @Controller('creations')
@@ -64,10 +66,24 @@ export class CreationController {
   // @ApiBearerAuth()
   async create(
     @Body() createCreationDto: CreateCreationDto,
-    @Request() req?: any, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
     // 临时使用固定用户ID，实际应该从JWT token中获取
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
+    return this.creationService.create(createCreationDto, userId);
+  }
+
+  /**
+   * 创建作品（内部接口，不展示在Swagger）
+   */
+  @Post('internal-create')
+  @Public()
+  @ApiExcludeEndpoint()
+  async internalCreate(
+    @Body() createCreationDto: CreateCreationDto,
+  ): Promise<Creation> {
+    // 使用固定的用户ID
+    const userId = 14;
     return this.creationService.create(createCreationDto, userId);
   }
 
@@ -81,9 +97,9 @@ export class CreationController {
   @ApiResponse({ status: 200, description: '查询成功', type: [Creation] })
   async findAll(
     @Query() query: QueryCollectionDto,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<PaginatedResponse<Creation>> {
-    const currentUserId = req?.user?.id;
+    const currentUserId = user?.id;
     return this.creationService.findAll(query, currentUserId);
   }
 
@@ -115,9 +131,9 @@ export class CreationController {
   @ApiResponse({ status: 403, description: '无权查看此作品' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const currentUserId = req?.user?.id;
+    const currentUserId = user?.id;
     return this.creationService.findOne(id, currentUserId);
   }
 
@@ -135,9 +151,9 @@ export class CreationController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCreationDto: UpdateCreationDto,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     return this.creationService.update(id, updateCreationDto, userId);
   }
 
@@ -154,9 +170,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<{ message: string }> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     await this.creationService.remove(id, userId);
     return { message: '作品删除成功' };
   }
@@ -174,9 +190,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async togglePublic(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     return this.creationService.togglePublic(id, userId);
   }
 
@@ -193,9 +209,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async likeCreation(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     return this.creationService.likeCreation(id, userId);
   }
 
@@ -212,9 +228,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async unlikeCreation(
     @Param('id', ParseIntPipe) id: number,
-    @Request() req?: any, // 临时处理   
+    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = req?.user?.id || 1;
+    const userId = user?.id || 1;
     return this.creationService.unlikeCreation(id, userId);
   }
 
