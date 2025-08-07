@@ -48,24 +48,18 @@ export class CreationService {
    * @param currentUserId - 当前用户ID（用于权限控制）
    * @returns 分页后的作品列表
    */
-  async findAll(query: QueryCreationDto, currentUserId?: number, isAdmin: boolean=true): Promise<PaginatedResponse<Creation>> {
-    const { title, prompt, status, user, page, pageSize } = query;
+  async findAll(query: QueryCreationDto, currentUserId?: number, isAdmin: boolean=false): Promise<PaginatedResponse<Creation>> {
+    const { title, prompt, status, userId, isSelf} = query;
+    // 保证分页参数为数字且有默认值
+    let page = Number(query.page);
+    let pageSize = Number(query.pageSize);
+    if (!Number.isFinite(page) || page < 1) page = 1;
+    if (!Number.isFinite(pageSize) || pageSize < 1) pageSize = 10;
     
     // 创建查询构建器
     const queryBuilder = this.creationRepository.createQueryBuilder('creation');
     if (isAdmin) {
       queryBuilder.leftJoinAndSelect('creation.user', 'user');
-    }
-
-    // 权限控制：如果不是查询自己的作品，只能查看公开作品
-    if (user && user.id !== currentUserId) {
-      queryBuilder.andWhere('creation.status = :status', { status: 1 });
-    } else if (!user && currentUserId) {
-      // 如果没有指定userId但有当前用户，查询当前用户的所有作品
-      queryBuilder.andWhere('creation.userId = :currentUserId', { currentUserId });
-    } else if (!user && !currentUserId) {
-      // 如果都没有指定，只查询公开作品
-      queryBuilder.andWhere('creation.status = :status', { status: 1 });
     }
 
     // 按标题模糊查询
@@ -83,21 +77,23 @@ export class CreationService {
       queryBuilder.andWhere('creation.status = :status', { status });
     }
 
-    // 按指定用户筛选
-    if (user) {
-      queryBuilder.andWhere('creation.user.id = :userId', { userId: user.id });
+    // 如果登陆了，则可以查询自己的作品
+    if (isAdmin && userId) {
+      queryBuilder.andWhere('creation.user.id = :userId', { userId: userId });
+    }else if(isSelf) {
+      queryBuilder.andWhere('creation.user.id = :userId', { userId: currentUserId });
     }
 
-    // 按排序字段进行排序
+    // 按排序字段进行排序, 默认是按updateAt 排序
     if (query.sort) {
       queryBuilder.orderBy(`creation.${query.sort}`, query.sortOrder);
+    } else {
+      queryBuilder.orderBy('creation.updatedAt', 'DESC');
     }
 
-
-
     // 分页
-    const skip = (page - 1) * pageSize;
-    queryBuilder.skip(skip).take(pageSize);
+    // const skip = (page - 1) * pageSize;
+    // queryBuilder.skip(skip).take(pageSize);
 
     // 执行查询
     const [list, total] = await queryBuilder.getManyAndCount();
@@ -329,7 +325,11 @@ export class CreationService {
    * @returns 用户收藏的作品列表
    */
   async getUserCollections(userId: number, query: QueryCollectionDto): Promise<PaginatedResponse<UserCollection>> {
-    const { page, pageSize } = query;
+    // 保证分页参数为数字且有默认值
+    let page = Number(query.page);
+    let pageSize = Number(query.pageSize);
+    if (!Number.isFinite(page) || page < 1) page = 1;
+    if (!Number.isFinite(pageSize) || pageSize < 1) pageSize = 10;
     
     // 创建查询构建器, user只展示id和username
     const queryBuilder = this.userCollectionRepository.createQueryBuilder('collection')

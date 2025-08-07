@@ -9,10 +9,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, IsBoolean, IsEnum, IsNumber, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
-import { User } from '@/modules/user/entities/user.entity';
 
 export enum SortField {
-  CREATED_AT = 'createdAt',
+  CREATED_AT = 'updatedAt',
   LIKES = 'likes',
   FAVORITES = 'favorites',
   COLLECTIONS = 'collections'
@@ -34,6 +33,12 @@ export class QueryCreationDto {
   @IsString({ message: '提示词关键词必须是字符串' })
   prompt?: string;
 
+
+  @ApiProperty({ description: '是否为自己的作品', required: false, example: true })
+  @IsOptional()
+  @IsBoolean({ message: '是否为自己的作品必须是布尔值' })
+  isSelf?: boolean;
+
   @ApiProperty({ description: '是否公开', required: false, example: true })
   @IsOptional()
   @IsBoolean({ message: '公开状态必须是布尔值' })
@@ -43,7 +48,7 @@ export class QueryCreationDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber({}, { message: '创建人ID必须是数字' })
-  user?: User;
+  userId?: number;
 
   @ApiProperty({ description: '排序字段', required: false, example: SortField.CREATED_AT })
   @IsOptional()

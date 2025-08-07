@@ -43,8 +43,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator'
 import { UploadFileDto } from '../file/dto/upload-file.dto';
 import { CurrentUser } from '../userAction/user-action.controller';
-import { User } from '../user/entities/user.entity';
-import { userInfo } from 'os';
+import { JwtUserDto } from '../user/dto/jwt.user.dto';
+
 
 @ApiTags('创作管理')
 @Controller('creations')
@@ -66,10 +66,10 @@ export class CreationController {
   // @ApiBearerAuth()
   async create(
     @Body() createCreationDto: CreateCreationDto,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
     // 临时使用固定用户ID，实际应该从JWT token中获取
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.create(createCreationDto, userId);
   }
 
@@ -91,16 +91,15 @@ export class CreationController {
    * 分页查询作品列表
    * 这个不需要权限认证
    */
-  @Public()
   @Get()
   @ApiOperation({ summary: '分页查询作品列表' })
   @ApiResponse({ status: 200, description: '查询成功', type: [Creation] })
   async findAll(
-    @Query() query: QueryCollectionDto,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @Query() query: QueryCreationDto,
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<PaginatedResponse<Creation>> {
-    const currentUserId = user?.id;
-    return this.creationService.findAll(query, currentUserId);
+    const currentUserId = user?.userId;
+    return this.creationService.findAll(query, currentUserId,true);
   }
 
   /**
@@ -116,13 +115,14 @@ export class CreationController {
     // 将参数转为number 类型
     query.page = Number(query.page) || 0 ;
     query.pageSize = Number(query.pageSize) || 10;
+    // 公开作品, 广场默认是公开作品
+    query.status = 1;
     return this.creationService.findPublicCreations(query);
   }
 
   /**
    * 获取作品详情
    */
-  @Public()
   @Get(':id')
   @ApiOperation({ summary: '获取作品详情' })
   @ApiParam({ name: 'id', description: '作品ID', type: 'number' })
@@ -131,9 +131,9 @@ export class CreationController {
   @ApiResponse({ status: 403, description: '无权查看此作品' })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const currentUserId = user?.id;
+    const currentUserId = user?.userId;
     return this.creationService.findOne(id, currentUserId);
   }
 
@@ -151,9 +151,9 @@ export class CreationController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCreationDto: UpdateCreationDto,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.update(id, updateCreationDto, userId);
   }
 
@@ -170,9 +170,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async remove(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<{ message: string }> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     await this.creationService.remove(id, userId);
     return { message: '作品删除成功' };
   }
@@ -190,9 +190,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async togglePublic(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.togglePublic(id, userId);
   }
 
@@ -209,9 +209,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async likeCreation(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息
   ): Promise<Creation> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.likeCreation(id, userId);
   }
 
@@ -228,9 +228,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async unlikeCreation(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User, // 临时处理，实际应该从JWT中获取用户信息
+    @CurrentUser() user: JwtUserDto, // 临时处理，实际应该从JWT中获取用户信息         
   ): Promise<Creation> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.unlikeCreation(id, userId);
   }
 
@@ -248,9 +248,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async collectCreation(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtUserDto,
   ): Promise<UserCollection> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.collectCreation(id, userId);
   }
 
@@ -266,9 +266,9 @@ export class CreationController {
   // @ApiBearerAuth()
   async uncollectCreation(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtUserDto,
   ): Promise<{ message: string }> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     await this.creationService.uncollectCreation(id, userId);
     return { message: '取消收藏成功' };
   }
@@ -282,9 +282,9 @@ export class CreationController {
   @ApiResponse({ status: 200, description: '查询成功', type: [UserCollection] })
   async getUserCollections(
     @Query() query: QueryCollectionDto,
-    @CurrentUser() user: User,
+    @CurrentUser() user: JwtUserDto,
   ): Promise<PaginatedResponse<UserCollection>> {
-    const userId = user?.id || 1;
+    const userId = user?.userId || 1;
     return this.creationService.getUserCollections(userId, query);
   }
 
