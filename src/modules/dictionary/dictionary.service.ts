@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Dictionary } from './entities/dictionary.entity';
 import { CreateDictionaryDto } from './dto/create-dictionary.dto';
 import { UpdateDictionaryDto } from './dto/update-dictionary.dto';
+import { UpdateDictionaryValueDto } from './dto/update-dictionary-value.dto';
 import { QueryDictionaryDto } from './dto/query-dictionary.dto';
 import { ListResponse } from '@/models/list-response.model';
 
@@ -104,6 +105,23 @@ export class DictionaryService {
     }
     
     Object.assign(dictionary, updateDictionaryDto);
+    return this.dictionaryRepository.save(dictionary);
+  }
+
+  /**
+   * 快速更新字典值
+   */
+  async updateValue(updateDictionaryValueDto: UpdateDictionaryValueDto): Promise<Dictionary | null> {
+    const { category, name, value } = updateDictionaryValueDto;
+    const dictionary = await this.dictionaryRepository.findOne({
+      where: { category, name, isEnabled: true },
+    });
+    
+    if (!dictionary) {
+      throw new NotFoundException(`字典分类 '${category}' 和名称 '${name}' 不存在`);
+    }
+    
+    dictionary.value = value;
     return this.dictionaryRepository.save(dictionary);
   }
 

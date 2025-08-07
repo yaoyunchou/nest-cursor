@@ -7,6 +7,7 @@ import { Dictionary } from './entities/dictionary.entity';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery, ApiParam, ApiOkResponse, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { ListResponse } from '@/models/list-response.model';
 import { Public } from '@/modules/auth/decorators/public.decorator';
+import { UpdateDictionaryValueDto } from './dto/update-dictionary-value.dto';
 
 /**
  * 字典控制器
@@ -85,13 +86,13 @@ export class DictionaryController {
     return this.dictionaryService.findByCategoryAndName(category, name);
   }
 
-  /** 获取单个字典 */
-  @Get(':id')
-  @ApiOperation({ summary: '获取单个字典' })
-  @ApiParam({ name: 'id', description: '字典ID' })
-  @ApiOkResponse({ description: '查询成功', type: Dictionary })
-  async findOne(@Param('id') id: number): Promise<Dictionary | null> {
-    return this.dictionaryService.findOne(id);
+  /** 快速更新字典值 */
+  @Put('/update/value')
+  @ApiOperation({ summary: '快速更新字典值' })
+  @ApiBody({ type: UpdateDictionaryValueDto, description: '更新参数' })
+  @ApiOkResponse({ description: '更新成功', type: Dictionary })
+  async updateValue(@Body() dto: UpdateDictionaryValueDto): Promise<Dictionary | null> {
+    return this.dictionaryService.updateValue(dto);
   }
 
   /** 更新字典 */
