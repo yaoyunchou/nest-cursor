@@ -17,7 +17,7 @@ export class Dictionary {
   name: string;
 
   /** 字典值 */
-  @Column({ type: 'varchar', length: 500, comment: '字典值' })
+  @Column({ type: 'varchar', comment: '字典值' })
   value: string;
 
   /** 排序权重 */
