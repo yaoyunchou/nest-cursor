@@ -15,6 +15,7 @@ import { CreateUserDto } from '../user/dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { WechatLoginDto } from './dto/wechat-login.dto';
 import { RedisService } from '@/core/services/redis/redis.service';
+import { DictionaryService } from '../dictionary/dictionary.service';
 
 @Injectable()
 export class AuthService {
@@ -23,6 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private redisService: RedisService,
+    private dictionaryService: DictionaryService,
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -72,6 +74,40 @@ export class AuthService {
   }
 
   /**
+   * 获取微信账号配置
+   * @param accountId 账号ID（可选，如果不提供则使用第一个账号）
+   * @returns 微信账号配置
+   */
+  private async getWechatAccountConfig(accountId?: string) {
+    const dictionary = await this.dictionaryService.findByCategoryAndName('wechat', 'wechat_mini_program_account');
+    if (!dictionary) {
+      throw new HttpException('未配置微信小程序账号', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    const accounts = JSON.parse(dictionary.value) as Array<{ id: string; appId: string; appSecret: string; name: string }>;
+    if (!accounts || accounts.length === 0) {
+      throw new HttpException('微信小程序账号配置为空', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    let account;
+    if (accountId) {
+      account = accounts.find(acc => acc.id === accountId);
+      if (!account) {
+        throw new HttpException(`未找到ID为 ${accountId} 的微信账号`, HttpStatus.BAD_REQUEST);
+      }
+    } else {
+      account = accounts[0];
+    }
+
+    return {
+      appId: account.appId,
+      appSecret: account.appSecret,
+      name: account.name,
+      id: account.id,
+    };
+  }
+
+  /**
    *  这个接口有两个功能
    * 1. 根据code返回对应的数据，如果用户没有注册过，则判断是否传入了头像和用户名， 没有则直击返回用户信息为null
    * 2. 如果用户没有注册过，还传入了用户名和头像， 则新增用户， 默认角色为用户， 而且必须传入用户名和头像， 完成后返回用户信息和token
@@ -81,12 +117,11 @@ export class AuthService {
    */
   async wechatLogin(wechatLoginDto: WechatLoginDto) {
     try {
-      const { code, username, avatar, phone } = wechatLoginDto;
-      const wxAppid = process.env.WECHAT_APP_ID;
-      const wxSecret = process.env.WECHAT_APP_SECRET;
+      const { code, username, avatar, phone, accountId } = wechatLoginDto;
+      const config = await this.getWechatAccountConfig(accountId);
       const secret = process.env.SECRET;
 
-      const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${wxAppid}&secret=${wxSecret}&js_code=${code}&grant_type=authorization_code`;
+      const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${config.appId}&secret=${config.appSecret}&js_code=${code}&grant_type=authorization_code`;
       
       const response = await fetch(url);
       const data = await response.json();
@@ -150,12 +185,11 @@ export class AuthService {
     }
   }
   // 获取access_token  https://api.weixin.qq.com/cgi-bin/token
-  async getAccessToken() {
-    const wxAppid = process.env.WECHAT_APP_ID;
-    const wxSecret = process.env.WECHAT_APP_SECRET;
+  async getAccessToken(accountId?: string) {
+    const config = await this.getWechatAccountConfig(accountId);
     const grant_type = 'client_credential';
 
-    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=${grant_type}&appid=${wxAppid}&secret=${wxSecret}`;
+    const url = `https://api.weixin.qq.com/cgi-bin/token?grant_type=${grant_type}&appid=${config.appId}&secret=${config.appSecret}`;
     const response = await fetch(url);
     const data = await response.json();
     const { access_token, errmsg, errcode } = data;

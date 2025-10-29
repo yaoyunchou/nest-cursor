@@ -13,11 +13,13 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { UserModule } from '../user/user.module';
+import { DictionaryModule } from '../dictionary/dictionary.module';
 
 @Module({
   imports: [
     UserModule,
     PassportModule,
+    DictionaryModule,
     JwtModule.register({
       secret: process.env.SECRET,
       signOptions: { expiresIn: '24h' },

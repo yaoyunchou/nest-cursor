@@ -7,12 +7,17 @@ export class WechatLoginDto {
   @IsNotEmpty()
   code: string;
 
+  @ApiProperty({ description: '小程序账号ID（UUID）', required: false })
+  @IsString()
+  @IsOptional()
+  accountId: string;
+
   @ApiProperty({ description: '用户名' })
   @IsString()
   @IsOptional()
   username: string; 
 
-  @ApiProperty({ description: '用户名' })
+  @ApiProperty({ description: '用户手机号' })
   @IsString()
   @IsOptional()
   phone: string; 
