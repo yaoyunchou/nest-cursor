@@ -78,7 +78,7 @@ export class AuthService {
    * @param accountId 账号ID（可选，如果不提供则使用第一个账号）
    * @returns 微信账号配置
    */
-  private async getWechatAccountConfig(accountId?: string) {
+  private async getWechatAccountConfig(accountId: string = "550e8400-e29b-41d4-a716-446655440000") {
     const dictionary = await this.dictionaryService.findByCategoryAndName('wechat', 'wechat_mini_program_account');
     if (!dictionary) {
       throw new HttpException('未配置微信小程序账号', HttpStatus.INTERNAL_SERVER_ERROR);
