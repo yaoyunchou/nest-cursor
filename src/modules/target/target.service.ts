@@ -176,7 +176,7 @@ export class TargetService {
       progress,
       completionPercentage: Math.min(completionPercentage, 100),
     }); 
-      const task = this.taskRepository.create({ ...createTargetTaskDto, target, user: { id: userId } });
+      const task = this.taskRepository.create({ ...createTargetTaskDto, target });
 
       return await this.taskRepository.save(task);
     } catch (error) {
