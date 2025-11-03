@@ -152,7 +152,8 @@ export class TargetService {
   /**
    * 创建任务 
    * @param targetId - 目标ID
-   * @param createTaskDto - 任务创建数据
+   * @param createTargetTaskDto - 任务创建数据
+   * @param userId - 用户ID
    * @returns 创建的任务实体
    */
   async createTask(targetId: number, createTargetTaskDto: CreateTargetTaskDto, userId: number): Promise<Task> {
@@ -172,18 +173,12 @@ export class TargetService {
     const completionPercentage = (totalTaskTime / target.plannedHours) * 100;
     target.progress = progress;
     target.completionPercentage = completionPercentage;
-    await this.targetRepository.update(targetId, {
-      progress,
-      completionPercentage: Math.min(completionPercentage, 100),
-    }); 
-      const task = this.taskRepository.create({ ...createTargetTaskDto, target });
-
-      return await this.taskRepository.save(task);
-    } catch (error) {
-      throw new BadRequestException('创建任务失败');  
-    }
+    const task = this.taskRepository.create({ ...createTargetTaskDto, userId, target });
+    return await this.taskRepository.save(task);
+  } catch (error) {
+    throw new BadRequestException('创建任务失败');
   }
-
+} 
   /**
    * 删除任务
    * @param targetId - 目标ID
