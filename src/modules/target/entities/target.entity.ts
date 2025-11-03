@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Task } from './task.entity';
+import { User } from '@/modules/user/entities/user.entity';
 
 /**
  * 目标实体
@@ -50,6 +51,11 @@ export class Target {
   // 关联的任务列表
   @OneToMany(() => Task, task => task.target)
   tasks: Task[];
+
+  // 关联的用户（多对一关系：一个目标属于一个用户）
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'userId' })
+  user: User;
 
   // 创建时间
   @CreateDateColumn()

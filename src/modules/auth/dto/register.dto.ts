@@ -13,7 +13,7 @@ export class RegisterDto {
   @IsString()
   password: string;
 
-  @ApiProperty({ description: '用户角色', enum: UserRole, isArray: true })
+  @ApiProperty({ description: '用户角色', required: false, enum: UserRole, isArray: true })
   @IsArray()
   roles: UserRole[];
 } 

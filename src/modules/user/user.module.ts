@@ -12,10 +12,11 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { User } from './entities/user.entity';
 import { RoleModule } from '../role/role.module';
+import { Target } from '../target/entities/target.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Target]),
     RoleModule,
   ],
   controllers: [UserController],

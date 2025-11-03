@@ -5,9 +5,10 @@ import { TargetService } from './target.service';
 import { Target } from './entities/target.entity';
 import { Task } from './entities/task.entity';
 import { TargetTaskController } from './targetTask.controller';
+import { User } from '../user/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Target, Task])],
+  imports: [TypeOrmModule.forFeature([Target, Task, User])],
   controllers: [TargetController, TargetTaskController],
   providers: [TargetService],
   exports: [TargetService],

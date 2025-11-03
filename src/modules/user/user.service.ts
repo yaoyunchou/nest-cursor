@@ -20,6 +20,7 @@ import * as bcrypt from 'bcrypt';
 import { RoleService } from '../role/role.service';
 import { RoleCode } from '../role/entities/role.entity';
 import { UserResponseDto } from './dto/user-response.dto';
+import { Target } from '../target/entities/target.entity';
 
 @Injectable()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -27,6 +28,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(Target)
+    private readonly targetRepository: Repository<Target>,
     private readonly roleService: RoleService,
   ) {}
 
@@ -147,7 +150,19 @@ export class UserService {
   }
 
   async remove(id: number): Promise<void> {
-    const user = await this.findOne(id);
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+    if (!user) {
+      throw new NotFoundException(`用户ID ${id} 不存在`);
+    }
+    // 查询用户的所有目标并删除
+    const targets = await this.targetRepository.find({
+      where: { user: { id } },
+    });
+    for (const target of targets) {
+      await this.targetRepository.delete(target.id);
+    }
     await this.userRepository.remove(user);
   }
 

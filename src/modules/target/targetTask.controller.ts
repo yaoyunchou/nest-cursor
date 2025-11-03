@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Delete, Query,Request, BadRequestException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Delete, Query,Request, BadRequestException, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TargetService } from './target.service';
 import { CreateTargetDto } from './dto/create-target.dto';
@@ -25,13 +25,24 @@ export class TargetTaskController {
   @Post(':targetId')
   @ApiOperation({ summary: '创建任务' })
   async createTask(@Request() req, @Param('targetId') targetId: string, @Body() createTargetTaskDto: CreateTargetTaskDto, ) {
-    if(req?.user?.userId) {
-      createTargetTaskDto.userId = req?.user?.userId;
+    const userId = req?.user?.userId ? parseInt(req.user.userId, 10) : undefined;
+    if (userId === undefined) {
+      throw new Error('用户ID不存在');
     }
+    return this.targetService.createTask(+targetId, createTargetTaskDto, userId);
+  }
 
-   
-
-    return this.targetService.createTask(+targetId, createTargetTaskDto);
+  /**
+   * 修改任务
+   * @param targetId - 目标ID
+   * @param taskId - 任务ID
+   * @param updateTaskDto - 更新任务数据
+   * @returns 更新后的任务实体
+   */
+  @Put(':taskId')
+  @ApiOperation({ summary: '修改任务' })
+  updateTask(@Param('targetId') targetId: string, @Param('taskId') taskId: string, @Body() updateTaskDto: CreateTargetTaskDto) {
+    return this.targetService.updateTask(+targetId, +taskId, updateTaskDto);
   }
 
   /**

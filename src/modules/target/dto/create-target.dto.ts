@@ -2,6 +2,11 @@ import { IsString, IsEnum, IsNumber, IsOptional, IsDateString } from 'class-vali
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTargetDto {
+  @ApiProperty({ description: '用户ID', required: false })
+  @IsOptional()
+  @IsNumber()
+  userId: number;
+
   @ApiProperty({ description: '目标名称' })
   @IsString()
   name: string;

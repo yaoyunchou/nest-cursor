@@ -30,7 +30,7 @@ export class User {
   username: string;
 
   @ApiProperty({ description: '性别'})
-  @Column({ unique:false})
+  @Column({ nullable: true })
   gender: string;
 
   @ApiProperty({ description: '邮箱' })

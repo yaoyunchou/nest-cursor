@@ -61,10 +61,9 @@ export class AuthService {
       throw new ConflictException('用户名已存在');
     }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
     const user = await this.userService.create({
       ...registerDto,
-      password: hashedPassword,
+      gender: registerDto.gender || null,
     });
 
     return {
