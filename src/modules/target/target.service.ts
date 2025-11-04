@@ -267,15 +267,46 @@ export class TargetService {
       where: { user: { id: userId } },
       relations: ['tasks', 'user']
     });
+    // 总目标数
+    const totalTargets = targets.length;
+    // 总任务数
+    const totalTasks = targets.reduce((sum, target) => sum + target.tasks.length, 0);
+    // 总目标规划时间
+    const totalPlannedTime = targets.reduce((sum, target) => sum + target.plannedHours, 0);
+    // 总任务完成时间
+    const totalTaskCompletedTime = targets.reduce((sum, target) => sum + target.tasks.reduce((sum, task) => sum + task.time, 0), 0);
     //  计算所有目标的总时间， 完成时间， 完成百分比
     const totalTime = targets.reduce((sum, target) => sum + target.plannedHours, 0);
     // 计算所有目标中任务的花费总时间
     const totalTaskTime = targets.reduce((sum, target) => sum + target.tasks.reduce((sum, task) => sum + task.time, 0), 0);
     // 检查有多少目标是完成的
     const completedTargets = targets.filter(target => target.status === 'COMPLETED');
+    // 完成目标百分比
     const completedTargetsPercentage = (completedTargets.length / targets.length) * 100;
+    // 完成任务百分比
     const completionPercentage = (totalTaskTime / totalTime) * 100;
+    // 每个目标的完成时间
+    const targetSummaryList = [];
+    for(let i = 0; i < targets.length; i++) {
+      const target = targets[i];
+      const targetSummaryItem = {
+        ...target,
+        name: target.name,
+        plannedHours: target.plannedHours,
+        completedTime: target.tasks.reduce((sum, task) => sum + task.time, 0),
+        completionPercentage: (target.tasks.reduce((sum, task) => sum + task.time, 0) / target.plannedHours) * 100,
+      };
+      targetSummaryList.push(targetSummaryItem);
+    }
+
+    
+    // 返回用户目标汇总
     return {
+      targets: targetSummaryList,
+      totalTargets,
+      totalTasks,
+      totalPlannedTime,
+      totalTaskCompletedTime,
       totalTime,
       totalTaskTime,
       completedTargetsPercentage,
@@ -283,5 +314,19 @@ export class TargetService {
       completedTargets
     };
    
+  }
+  
+  /**
+   * 创建公共任务
+   * @param createTargetTaskDto - 任务创建数据
+   * @returns 创建的任务实体
+   */
+  async createPublicTask(createTargetTaskDto: CreateTargetTaskDto): Promise<Task> {
+    try {
+      const task = this.taskRepository.create({ ...createTargetTaskDto, target: { id: 1 } });
+      return await this.taskRepository.save(task);
+    } catch (error) {
+      throw new BadRequestException('创建公共任务失败');
+    }
   }
 } 

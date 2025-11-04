@@ -12,7 +12,7 @@ import { SummarizeDto } from './dto/summarize.dto';
 import { ExpandDto } from './dto/expand.dto';
 import { RewriteDto } from './dto/rewrite.dto';
 import { GenerateDto } from './dto/generate.dto';
-import OpenAI from 'openai';
+import axios, { AxiosInstance } from 'axios';
 
 /**
  * 搜索结果接口
@@ -62,7 +62,10 @@ export interface TextProcessResponse {
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
-  private openaiClient: OpenAI | null = null;
+  private httpClient: AxiosInstance | null = null;
+  private apiKey: string | null = null;
+  private baseURL: string;
+  private model: string;
 
   constructor(
     @InjectRepository(User)
@@ -75,39 +78,28 @@ export class AiService {
     private creationRepository: Repository<Creation>,
     private readonly configService: ConfigService,
   ) {
-    this.initializeOpenAIClient();
+    this.initializeHttpClient();
   }
 
   /**
-   * 初始化OpenAI客户端
+   * 初始化HTTP客户端
    */
-  private initializeOpenAIClient(): void {
-    const apiKey = this.configService.get<string>('COZE_API_KEY');
-    const baseURL = this.configService.get<string>('ARK_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3');
-    if (apiKey) {
-      this.openaiClient = new OpenAI({
-        apiKey,
-        baseURL,
+  private initializeHttpClient(): void {
+    this.apiKey = this.configService.get<string>('ARK_API_KEY') || this.configService.get<string>('COZE_API_KEY');
+    this.baseURL = this.configService.get<string>('ARK_BASE_URL', 'https://ark.cn-beijing.volces.com/api/v3');
+    this.model = this.configService.get<string>('ARK_MODEL', 'doubao-seed-1-6-flash-250828');
+    if (this.apiKey) {
+      this.httpClient = axios.create({
+        baseURL: this.baseURL,
+        timeout: 30000,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       this.logger.log('火山引擎AI客户端初始化成功');
     } else {
-      this.logger.warn('COZE_API_KEY未配置，AI聊天功能将不可用');
+      this.logger.warn('ARK_API_KEY未配置，AI聊天功能将不可用');
     }
-  }
-
-
-
-  /**
-   * 搜索任务
-   */
-  private async searchTasks(keyword: string, pageIndex: number, pageSize: number) {
-    const [list, total] = await this.taskRepository.findAndCount({
-      where: { name: Like(`%${keyword}%`) },
-      relations: ['target'],
-      skip: (pageIndex - 1) * pageSize,
-      take: pageSize,
-    });
-    return { list, total };
   }
 
 
@@ -119,8 +111,8 @@ export class AiService {
   async chat(chatDto: ChatDto): Promise<ChatResponse> {
     const { message, history = [], systemPrompt } = chatDto;
     try {
-      if (!this.openaiClient) {
-        throw new BadRequestException('AI服务未配置，请检查COZE_API_KEY环境变量');
+      if (!this.httpClient || !this.apiKey) {
+        throw new BadRequestException('AI服务未配置，请检查ARK_API_KEY环境变量');
       }
       const aiResponse = await this.callDoubaoAI(message, history, systemPrompt);
       return {
@@ -148,8 +140,8 @@ export class AiService {
   async summarize(summarizeDto: SummarizeDto): Promise<TextProcessResponse> {
     const { content, length = 200, style } = summarizeDto;
     try {
-      if (!this.openaiClient) {
-        throw new BadRequestException('AI服务未配置，请检查COZE_API_KEY环境变量');
+      if (!this.httpClient || !this.apiKey) {
+        throw new BadRequestException('AI服务未配置，请检查ARK_API_KEY环境变量');
       }
       let systemPrompt = `你是一个专业的文本总结助手。请对用户提供的内容进行总结。`;
       if (style) {
@@ -183,8 +175,8 @@ export class AiService {
   async expand(expandDto: ExpandDto): Promise<TextProcessResponse> {
     const { content, targetLength, direction } = expandDto;
     try {
-      if (!this.openaiClient) {
-        throw new BadRequestException('AI服务未配置，请检查COZE_API_KEY环境变量');
+      if (!this.httpClient || !this.apiKey) {
+        throw new BadRequestException('AI服务未配置，请检查ARK_API_KEY环境变量');
       }
       let systemPrompt = `你是一个专业的文本扩写助手。请对用户提供的内容进行扩写，使其更加丰富和详细。`;
       if (direction) {
@@ -221,8 +213,8 @@ export class AiService {
   async rewrite(rewriteDto: RewriteDto): Promise<TextProcessResponse> {
     const { content, style, requirements } = rewriteDto;
     try {
-      if (!this.openaiClient) {
-        throw new BadRequestException('AI服务未配置，请检查COZE_API_KEY环境变量');
+      if (!this.httpClient || !this.apiKey) {
+        throw new BadRequestException('AI服务未配置，请检查ARK_API_KEY环境变量');
       }
       let systemPrompt = `你是一个专业的文本改写助手。请对用户提供的内容进行改写。`;
       const styleMap: Record<string, string> = {
@@ -266,8 +258,8 @@ export class AiService {
   async generate(generateDto: GenerateDto): Promise<TextProcessResponse> {
     const { prompt, length = 1000, contentType, keywords } = generateDto;
     try {
-      if (!this.openaiClient) {
-        throw new BadRequestException('AI服务未配置，请检查COZE_API_KEY环境变量');
+      if (!this.httpClient || !this.apiKey) {
+        throw new BadRequestException('AI服务未配置，请检查ARK_API_KEY环境变量');
       }
       let systemPrompt = `你是一个专业的内容创作助手。根据用户的提示词和要求，创作高质量的内容。`;
       if (contentType) {
@@ -297,6 +289,27 @@ export class AiService {
   }
 
   /**
+   * 格式化消息内容
+   * 将字符串或数组格式转换为火山引擎API要求的格式
+   */
+  private formatMessageContent(
+    content: string | Array<{ type: string; text?: string; image_url?: { url: string } }>
+  ): string | Array<{ type: string; text?: string; image_url?: { url: string } }> {
+    if (typeof content === 'string') {
+      return content;
+    }
+    return content.map(item => {
+      if (item.type === 'text') {
+        return { type: 'text', text: item.text || '' };
+      }
+      if (item.type === 'image_url' && item.image_url) {
+        return { type: 'image_url', image_url: { url: item.image_url.url } };
+      }
+      return item;
+    });
+  }
+
+  /**
    * 调用火山引擎豆包AI
    */
   private async callDoubaoAI(
@@ -305,7 +318,13 @@ export class AiService {
     systemPrompt?: string,
   ): Promise<{ content: string; usage?: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }> {
     try {
-      const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> }> = [];
+      if (!this.httpClient || !this.apiKey) {
+        throw new BadRequestException('AI服务未配置');
+      }
+      const messages: Array<{ 
+        role: 'system' | 'user' | 'assistant'; 
+        content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> 
+      }> = [];
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt });
       }
@@ -313,35 +332,67 @@ export class AiService {
         const role = item.role as 'user' | 'assistant';
         return {
           role,
-          content: item.content,
+          content: this.formatMessageContent(item.content),
         };
       });
       messages.push(...formattedHistory);
-      messages.push({ role: 'user', content: message });
-      const model = this.configService.get<string>('ARK_MODEL', 'doubao-seed-1-6-flash-250828');
-      const response = await this.openaiClient.chat.completions.create({
-        model,
-        messages: messages as any,
+      const formattedMessage = this.formatMessageContent(message);
+      messages.push({ role: 'user', content: formattedMessage });
+      const requestBody = {
+        model: this.model,
+        messages: messages,
+        thinking: {
+          type: 'disabled',
+        },
         temperature: 0.7,
         max_tokens: 2000,
-      });
-      const choice = response.choices[0];
+      };
+      const startTime = Date.now();
+      const response = await this.httpClient.post(
+        '/chat/completions',
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+          },
+        },
+      );
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      this.logger.log(`AI聊天耗时: ${duration}ms`);
+      const choice = response.data.choices?.[0];
       if (!choice || !choice.message) {
         throw new BadRequestException('AI服务返回了空响应');
       }
-      const content = typeof choice.message.content === 'string' 
-        ? choice.message.content 
-        : JSON.stringify(choice.message.content);
+      let content: string;
+      if (typeof choice.message.content === 'string') {
+        content = choice.message.content;
+      } else if (Array.isArray(choice.message.content)) {
+        content = choice.message.content
+          .map((item: any) => {
+            if (item.type === 'text' && item.text) {
+              return item.text;
+            }
+            return '';
+          })
+          .join('');
+      } else {
+        content = JSON.stringify(choice.message.content);
+      }
       return {
         content,
-        usage: response.usage ? {
-          prompt_tokens: response.usage.prompt_tokens,
-          completion_tokens: response.usage.completion_tokens,
-          total_tokens: response.usage.total_tokens,
+        usage: response.data.usage ? {
+          prompt_tokens: response.data.usage.prompt_tokens || 0,
+          completion_tokens: response.data.usage.completion_tokens || 0,
+          total_tokens: response.data.usage.total_tokens || 0,
         } : undefined,
       };
     } catch (error) {
       this.logger.error('调用火山引擎AI失败:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.error?.message || error.message;
+        throw new BadRequestException(`AI服务调用失败: ${errorMessage}`);
+      }
       if (error instanceof Error) {
         throw new BadRequestException(`AI服务调用失败: ${error.message}`);
       }

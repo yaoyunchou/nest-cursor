@@ -2,6 +2,38 @@
 
 ## 2025-01-23
 
+### AI模块重构为直接HTTP请求
+
+1. **功能概述**
+   - 移除OpenAI SDK依赖，改用axios直接发送HTTP请求
+   - 按照火山引擎官方API格式重构请求和响应处理
+   - 支持官方demo格式的请求（包括thinking参数）
+
+2. **技术实现**
+   - 移除 `openai` 包的使用，改用 `axios` 发送HTTP请求
+   - 修改 `initializeHttpClient()` 方法，创建axios实例
+   - 重构 `callDoubaoAI()` 方法，使用HTTP POST请求
+   - 添加 `formatMessageContent()` 方法格式化消息内容
+   - 按照官方demo格式设置请求体：
+     - model: 模型名称（默认：doubao-seed-1-6-250615）
+     - messages: 消息数组
+     - thinking: {type: "disabled"}
+     - temperature: 0.7
+     - max_tokens: 2000
+   - 请求头包含：Content-Type和Authorization Bearer token
+
+3. **环境变量**
+   - `ARK_API_KEY`：火山引擎API密钥（优先使用）
+   - `COZE_API_KEY`：兼容旧配置（备用）
+   - `ARK_BASE_URL`：API基础URL（默认：https://ark.cn-beijing.volces.com/api/v3）
+   - `ARK_MODEL`：模型名称（默认：doubao-seed-1-6-250615）
+
+4. **代码变更**
+   - 移除OpenAI类型定义，改用AxiosInstance
+   - 所有错误处理更新为axios错误处理
+   - 响应数据解析适配火山引擎API格式
+   - 支持content为字符串或数组格式的响应解析
+
 ### AI模块新增文本处理功能
 
 1. **功能概述**

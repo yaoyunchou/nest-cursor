@@ -79,4 +79,20 @@ export class TargetTaskController {
   findOneTask(@Param('targetId') targetId: string, @Param('taskId') taskId: string) {
     return this.targetService.findOneTask(+targetId, +taskId);
   }
+
+  /**
+   *  创建公共任务接口， 默认目标id是0
+   * @param createTargetTaskDto - 任务创建数据
+   * @returns 创建的任务实体
+   */
+  @Post('public/task')
+  @ApiOperation({ summary: '创建公共任务' })
+  createPublicTask(@Body() createTargetTaskDto: CreateTargetTaskDto, @Request() req) {
+    const userId = req?.user?.userId ? parseInt(req.user.userId, 10) : undefined;
+    if (userId === undefined) {
+      throw new Error('用户ID不存在');
+    }
+    createTargetTaskDto.userId = userId;
+    return this.targetService.createPublicTask(createTargetTaskDto);
+  }
 } 

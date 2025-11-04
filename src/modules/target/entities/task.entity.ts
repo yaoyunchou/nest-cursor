@@ -13,7 +13,7 @@ export class Task {
   id: number;
 
   // 任务名称
-  @Column()
+  @Column({ nullable: true })
   name: string;
 
   // 任务详细描述
