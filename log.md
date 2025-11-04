@@ -2,6 +2,133 @@
 
 ## 2025-01-23
 
+### AI模块新增文本处理功能
+
+1. **功能概述**
+   - 新增总结功能：对内容进行总结
+   - 新增扩写功能：对内容进行扩写，使其更丰富详细
+   - 新增改写功能：改写内容，支持多种风格
+   - 新增生成功能：根据提示词生成对应内容
+
+2. **API接口**
+   - `POST /api/v1/ai/summarize` - 总结内容
+     - 参数：content（必填）、length（可选，默认200字）、style（可选，总结风格）
+   - `POST /api/v1/ai/expand` - 扩写内容
+     - 参数：content（必填）、targetLength（可选，目标长度）、direction（可选，扩写方向）
+   - `POST /api/v1/ai/rewrite` - 改写内容
+     - 参数：content（必填）、style（可选，改写风格：formal/casual/professional/simple/elaborate）、requirements（可选，其他要求）
+   - `POST /api/v1/ai/generate` - 根据提示词生成内容
+     - 参数：prompt（必填）、length（可选，默认1000字）、contentType（可选，内容类型）、keywords（可选，关键词）
+
+3. **技术实现**
+   - 创建了4个新的DTO：SummarizeDto、ExpandDto、RewriteDto、GenerateDto
+   - 添加了TextProcessResponse接口用于统一响应格式
+   - 每个功能都使用特定的系统提示词模板
+   - 所有功能都调用统一的callDoubaoAI方法
+
+4. **使用示例**
+   - 总结：传入长文本，获取简洁总结
+   - 扩写：传入简短内容，获取详细扩写版本
+   - 改写：传入内容，根据风格要求改写
+   - 生成：传入提示词，生成对应内容
+
+### AI模块集成火山引擎（豆包）
+
+1. **功能概述**
+   - 将AI服务从OpenAI切换为火山引擎（字节跳动）的豆包模型
+   - 使用OpenAI SDK（兼容OpenAI API格式）
+   - 支持多模态输入（文本和图片）
+   - 使用模型：doubao-seed-1-6-flash-250828
+
+2. **技术实现**
+   - 安装 `openai` npm包
+   - 修改 `AiService` 使用OpenAI SDK初始化客户端
+   - 配置火山引擎的baseURL：`https://ark.cn-beijing.volces.com/api/v3`
+   - 更新 `ChatDto` 支持多模态输入（文本和图片）
+   - 修改 `callDoubaoAI` 方法调用火山引擎API
+
+3. **环境变量配置**
+   - `ARK_API_KEY`：火山引擎API密钥（必填）
+   - `ARK_BASE_URL`：火山引擎API基础URL（默认：https://ark.cn-beijing.volces.com/api/v3）
+   - `ARK_MODEL`：使用的模型名称（默认：doubao-seed-1-6-flash-250828）
+
+4. **API变更**
+   - `ChatDto.message` 现在支持两种格式：
+     - 字符串格式：纯文本消息
+     - 数组格式：支持图片和文本混合输入
+   - 示例数组格式：
+     ```json
+     [
+       {
+         "type": "image_url",
+         "image_url": {
+           "url": "https://example.com/image.jpg"
+         }
+       },
+       {
+         "type": "text",
+         "text": "这是哪里？"
+       }
+     ]
+     ```
+
+5. **代码变更**
+   - 移除axios HTTP客户端，改用OpenAI SDK
+   - 添加 `initializeOpenAIClient` 方法初始化客户端
+   - 修改 `callDoubaoAI` 方法支持多模态输入
+   - 更新错误处理和日志记录
+
+### AI模块开发完成
+
+1. **功能概述**
+   - 创建了完整的AI模块，提供关键词搜索和AI聊天功能
+   - 不需要数据库入库，只提供服务和接口
+   - 支持跨模块数据搜索（用户、目标、任务、创作等）
+
+2. **核心功能特点**
+   - **关键词搜索**：支持通过关键词搜索多个模块的数据
+     - 支持搜索类型：all（全部）、user（用户）、target（目标）、task（任务）、creation（创作）
+     - 支持分页查询
+     - 返回统一格式的搜索结果
+   - **AI聊天**：集成AI服务进行智能对话
+     - 支持对话历史记录
+     - 支持自定义系统提示词
+     - 可配置AI服务提供商（目前支持OpenAI）
+     - 支持环境变量配置AI服务参数
+
+3. **技术实现**
+   - 创建 `AiModule`、`AiService`、`AiController`
+   - 创建 `SearchKeywordDto` 和 `ChatDto` 数据传输对象
+   - 使用TypeORM Repository进行跨模块数据查询
+   - 使用axios进行AI服务API调用
+   - 支持多种AI服务提供商（通过环境变量配置）
+   - 在 `app.module.ts` 中注册AI模块
+
+4. **API接口**
+   - `GET /api/v1/ai/search`：关键词搜索接口
+     - 参数：keyword（必填）、type（可选，默认all）、pageIndex（可选）、pageSize（可选）
+   - `POST /api/v1/ai/chat`：AI聊天接口
+     - 参数：message（必填）、history（可选）、systemPrompt（可选）
+
+5. **环境变量配置**
+   - `AI_PROVIDER`：AI服务提供商（默认：openai）
+   - `AI_API_KEY`：AI服务API密钥（必填）
+   - `AI_API_BASE`：AI服务API基础URL（可选）
+   - `AI_MODEL`：AI模型名称（默认：gpt-3.5-turbo）
+
+6. **模块结构**
+   ```
+   ai/
+   ├── dto/
+   │   ├── search-keyword.dto.ts
+   │   └── chat.dto.ts
+   ├── ai.controller.ts
+   ├── ai.service.ts
+   └── ai.module.ts
+   ```
+
+## 2025-01-23
+
 ### 移除User实体中的targets字段
 
 1. **功能概述**

@@ -32,6 +32,10 @@ export class Task {
   @Column('text', { nullable: true })
   images: string;
 
+  // 任务权重，非必填
+  @Column('int', { nullable: true })
+  weight: number;
+
   // 关联的目标, 创建task_target表,记录task和target的关系,创建对应的任务的时候,会自动创建对应的task_target记录
   @ManyToOne(() => Target, target => target.tasks)
   @JoinColumn({ name: 'targetId' })

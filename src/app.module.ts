@@ -23,6 +23,7 @@ import { LowcodeModule } from './modules/lowcode/lowcode.module';
 import { NavigationModule } from './modules/navigation/navigation.module';
 import { UserActionModule } from './modules/userAction/user-action.module';
 import { DictionaryModule } from './modules/dictionary/dictionary.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -63,6 +64,7 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
     NavigationModule,
     UserActionModule,
     DictionaryModule,
+    AiModule,
   ],
   controllers: [HealthController],
 })
