@@ -1,5 +1,57 @@
 # 变更日志
 
+## 2025-01-22
+
+### 修复角色唯一索引冲突错误
+
+1. **问题描述**
+   - 错误信息：`QueryFailedError: Duplicate entry '' for key 'role.IDX_ee999bb389d7ac0fd967172c41'`
+   - 原因：数据库中已存在 `code` 字段为空字符串的记录，当 TypeORM 尝试同步数据库结构时，无法创建唯一索引，因为违反了唯一性约束
+
+2. **修复内容**
+   - **实体层修复**（`src/modules/role/entities/role.entity.ts`）
+     - 为 `code` 字段添加 `nullable: false` 约束，确保该字段不能为空
+     - 明确字段的唯一性和非空性要求
+   
+   - **服务层修复**（`src/modules/role/role.service.ts`）
+     - 实现 `OnModuleInit` 生命周期钩子，确保在模块初始化完成后再执行角色初始化
+     - 新增 `cleanupInvalidRoles()` 方法：在初始化角色之前清理数据库中可能存在的空字符串或 null 值的记录
+     - 改进 `initializeRoles()` 方法：添加错误处理和清理逻辑，确保初始化前先清理无效数据
+     - 改进 `create()` 方法：
+       - 添加 `code` 字段非空验证
+       - 验证 `code` 是否为有效的 `RoleCode` 枚举值
+       - 检查 `code` 是否已存在，防止重复创建
+       - 提供清晰的错误提示信息
+
+   - **数据库清理脚本**（`scripts/cleanup-invalid-roles.ts`）
+     - 创建独立的数据库清理脚本，用于在应用启动前手动清理无效记录
+     - 支持通过 npm 脚本运行：`npm run cleanup:roles`
+     - 脚本会查询并显示所有无效记录，然后删除它们
+
+3. **技术实现**
+   - 使用 `OnModuleInit` 生命周期钩子，确保数据库连接建立后再执行清理
+   - 使用原生 SQL 查询清理无效记录：`DELETE FROM role WHERE code = '' OR code IS NULL`
+   - 先查询再删除，避免并发问题
+   - 添加完整的错误处理和日志记录
+   - 确保数据完整性，防止未来再次出现类似问题
+
+4. **使用方法**
+   - **方法一（推荐）**：运行清理脚本
+     ```bash
+     npm run cleanup:roles
+     ```
+     或
+     ```bash
+     npx ts-node -r tsconfig-paths/register scripts/cleanup-invalid-roles.ts
+     ```
+   - **方法二**：应用启动时会自动清理（需要等待数据库连接建立）
+
+5. **影响范围**
+   - 修复后，应用启动时会自动清理无效的角色记录
+   - 创建角色时会进行严格的数据验证
+   - 提高了系统的数据完整性和健壮性
+   - 提供了手动清理工具，方便在紧急情况下使用
+
 ## 2025-01-18
 
 ### 新增ESP32芯片管理模块
