@@ -1,0 +1,77 @@
+version: '1.0'
+name: pipeline-20250123
+displayName: pipeline-20250123
+triggers:
+  trigger: auto
+  push:
+    branches:
+      precise:
+        - master
+    paths:
+      precise:
+        - src
+stages:
+  - name: stage-54f57b9d
+    displayName: 构建
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@nodejs
+        name: build_nodejs
+        displayName: Nodejs 构建
+        nodeVersion: 18.16.0
+        commands:
+          - '# 设置NPM源，提升安装速度'
+          - yarn config set registry https://registry.npmmirror.com
+          - ''
+          - '# 执行编译命令'
+          - yarn  && yarn  build
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./dist
+        caches:
+          - ~/.npm
+          - ~/.yarn
+        notify: []
+        strategy:
+          retry: '0'
+  - name: stage-cde051f9
+    displayName: 构建
+    strategy: naturally
+    trigger: auto
+    executor:
+      - xfysj
+    steps:
+      - step: deploy@agent
+        name: deploy_agent
+        displayName: 主机部署
+        hostGroupID:
+          ID: xfy
+          hostID:
+            - 7380f807-c6ba-4d65-a034-e337e6d59cff
+        deployArtifact:
+          - source: build
+            name: dist
+            target: /home/work/test
+            dependArtifact: output
+        script:
+          - '# 功能：部署脚本会在部署主机组的每台机器上执行'
+          - '# 使用场景：先将制品包解压缩到指定目录中，再执行启动脚本deploy.sh，脚本示例地址：https://gitee.com/gitee-go/spring-boot-maven-deploy-case/blob/master/deploy.sh'
+          - '# mkdir -p /home/admin/app'
+          - '# tar zxvf ~/gitee_go/deploy/output.tar.gz -C /home/admin/app'
+          - '# sh /home/admin/app/deploy.sh restart'
+          - '# 如果你是php之类的无需制品包的制品方式，可以使用 git clone 或者 git pull 将源代码更新到服务器，再执行其他命令'
+          - '# git clone ***@***.git'
+          - ''
+          - cd /home/work
+          - git clone git@gitee.com:xfygzs/nest-cursor.git
+          - cd nest-cursor
+          - yarn
+          - yarn build
+          - yarn pm2
+          - echo 'Hello Gitee Go!'
+        notify: []
+        strategy:
+          retry: '0'

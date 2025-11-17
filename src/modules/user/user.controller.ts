@@ -16,7 +16,10 @@ import {
   Param,
   Query,
   ParseIntPipe,
-  UseGuards
+  UseGuards,
+  Request,
+  UseInterceptors,
+  ClassSerializerInterceptor
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -24,26 +27,31 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { QueryUserDto } from './dto/query-user.dto';
-import { User } from './entities/user.entity';
+import { UserResponseDto } from './dto/user-response.dto';
 import { PaginatedResponse } from '../../shared/interfaces/pagination.interface';
 import { Roles, UserRole } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
+/**
+ * 用户管理
+ * 创建用户不需要验证权限
+ */
 @ApiTags('用户管理')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(JwtAuthGuard)
 @Controller('user')
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @ApiOperation({ summary: '创建用户' })
   @ApiResponse({ 
-    type: User,
+    type: UserResponseDto,
     description: '创建用户响应' 
   })
-  @Roles(UserRole.ADMIN)
   @Post()
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
     return this.userService.create(createUserDto);
   }
 
@@ -54,31 +62,61 @@ export class UserController {
   })
   @Roles(UserRole.ADMIN, UserRole.USER)
   @Get('list')
-  async findAll(@Query() query: QueryUserDto): Promise<PaginatedResponse<User>> {
+  async findAll(@Query() query: QueryUserDto): Promise<PaginatedResponse<UserResponseDto>> {
     return this.userService.findAll(query);
   }
 
   @ApiOperation({ summary: '获取用户详情' })
   @ApiResponse({ 
-    type: User,
+    type: UserResponseDto,
     description: '用户详情响应' 
   })
   @Get(':id')
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<User> {
+  async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserResponseDto> {
     return this.userService.findOne(id);
+  }
+
+  @ApiOperation({ summary: '获取当前用户信息' })
+  @ApiResponse({ 
+    type: UserResponseDto,
+    description: '当前用户信息响应' 
+  })
+  @Get('/info/detail')
+  async findUserInfo(@Request() req): Promise<UserResponseDto> {
+    // 获取当前登录用户信息
+    // console.log(req.user);
+    const userId = parseInt(req?.user?.userId, 10);
+    if (isNaN(userId)) {
+      throw new Error('无效的用户ID');
+    }
+    return this.userService.findOne(userId);
   }
 
   @ApiOperation({ summary: '更新用户' })
   @ApiResponse({ 
-    type: User,
+    type: UserResponseDto,
     description: '更新用户响应' 
   })
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
     return this.userService.update(id, updateUserDto);
+  }
+
+  // 修改密码
+  @ApiOperation({ summary: '修改密码' })
+  @ApiResponse({ 
+    type: UserResponseDto,
+    description: '修改密码响应' 
+  })
+  @Put('change/password')
+  async updatePassword(
+    @Request() req, 
+    @Body() updatePasswordDto: UpdatePasswordDto
+  ): Promise<UserResponseDto> {
+    return this.userService.updatePassword(req.user.userId, updatePasswordDto);
   }
 
   @ApiOperation({ summary: '删除用户' })
@@ -88,5 +126,21 @@ export class UserController {
   @Delete(':id')
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.userService.remove(id);
+  }
+
+  /**
+   * 只有管理员可以重置密码, 需要从请求体中获取jwt的用户信息
+   * query传入修改重置密码的用户id
+   * 重置密码为"2025@xfy"
+   * @param id 
+   * @returns 
+   */
+  @ApiOperation({ summary: '重置密码' })
+  @ApiResponse({ 
+    description: '重置密码响应' 
+  })
+  @Put('reset/password')
+  async resetPassword(@Request() req, @Query('id') id: number): Promise<void> {  
+    return this.userService.resetPassword(req.user, id);
   }
 } 

@@ -16,6 +16,14 @@ import { ArticleModule } from './modules/article/article.module';
 import { HealthController } from './health/health.controller';
 import { RoleModule } from './modules/role/role.module';
 import { FileModule } from './modules/file/file.module';
+import { TargetModule } from './modules/target/target.module';
+import { CreationModule } from './modules/creation/creation.module';
+import { CoreModule } from './core/core.module';
+import { LowcodeModule } from './modules/lowcode/lowcode.module';
+import { NavigationModule } from './modules/navigation/navigation.module';
+import { UserActionModule } from './modules/userAction/user-action.module';
+import { DictionaryModule } from './modules/dictionary/dictionary.module';
+import { AiModule } from './modules/ai/ai.module';
 import { Esp32Module } from './modules/esp32/esp32.module';
 
 @Module({
@@ -49,6 +57,14 @@ import { Esp32Module } from './modules/esp32/esp32.module';
     RoleModule,
     FileModule,
     Esp32Module,
+    TargetModule,
+    CreationModule,
+    CoreModule,
+    LowcodeModule,
+    NavigationModule,
+    UserActionModule,
+    DictionaryModule,
+    AiModule,
   ],
   controllers: [HealthController],
 })

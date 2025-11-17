@@ -6,12 +6,13 @@
  * @FilePath: \nest-cursor\src\auth\auth.controller.ts
  * @Description: 认证控制器
  */
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, HttpException, Request } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { WechatLoginDto } from './dto/wechat-login.dto';
 
 @ApiTags('认证管理')
 @Controller('auth')
@@ -35,4 +36,21 @@ export class AuthController {
   async register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
+
+  /**
+   * 微信小程序登录
+   * 1， 获取openid 和 session_key？
+   * 2，将信息存入session中
+   * @param wechatLoginDto 
+   * @returns 
+   */
+  @Public()
+  @ApiOperation({ summary: '微信小程序登录' })
+  @ApiResponse({ status: 200, description: '登录成功' })
+  @ApiResponse({ status: 401, description: '登录失败' })
+  @Post('wechat/login')
+  async wechatLogin(@Body() wechatLoginDto: WechatLoginDto) {
+    return this.authService.wechatLogin(wechatLoginDto);
+  }
+
 } 

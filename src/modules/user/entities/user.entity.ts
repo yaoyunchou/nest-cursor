@@ -16,7 +16,7 @@ import {
   JoinTable
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
-import { Role } from '../../role/role.entity'
+import { Role } from '../../role/entities/role.entity';
 
 
 @Entity('user')
@@ -28,6 +28,10 @@ export class User {
   @ApiProperty({ description: '用户名' })
   @Column({ unique: true })
   username: string;
+
+  @ApiProperty({ description: '性别'})
+  @Column({ nullable: true })
+  gender: string;
 
   @ApiProperty({ description: '邮箱' })
   @Column({ nullable: true })
@@ -49,8 +53,30 @@ export class User {
   @Column({ nullable: true })
   remark: string;
 
+  @ApiProperty({ description: '地址' })
+  @Column('json', { nullable: true })
+  address: number[];
+
+  @ApiProperty({ description: '地址文本' })
+  @Column({ nullable: true })
+  addressText: string;
+
+  @ApiProperty({ description: '生日' })
+  @Column({ nullable: true })
+  birth: string;
+
+
+  
+  @ApiProperty({ description: '手机' })
+  @Column({ nullable: true })
+  phone: string;
+   
+  @ApiProperty({ description: '微信openid' })
+  @Column({ nullable: true, unique: true })
+  openid?: string;
+
   @ApiProperty({ description: '用户角色', type: () => Role })
-  @ManyToMany(() => Role)
+  @ManyToMany(() => Role, { cascade: true })
   @JoinTable({
     name: 'user_roles',
     joinColumn: { name: 'user_id', referencedColumnName: 'id' },

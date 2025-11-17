@@ -18,10 +18,9 @@ export class TransformInterceptor<T>
   ): Observable<ApiResponse<T>> {
     const ctx = context.switchToHttp();
     const request = ctx.getRequest();
-    console.log('data', request.body);
     return next.handle().pipe(
       map((data) => {
-        console.log('data', data);
+        // 如果返回到是
         return {
           code: 0,
           message: '操作成功',
