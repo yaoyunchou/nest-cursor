@@ -119,3 +119,33 @@
      - 移除了调试用的 console.log 语句
    - 影响：修复后，拥有中文角色名称的用户可以正常通过权限验证，访问需要相应权限的API接口
 
+## 2025-01-18
+
+### 移除未使用的依赖包
+
+1. **移除 @nestjs/schedule 依赖**
+   - 原因：项目中未使用该模块
+   - 变更：从 `package.json` 中移除了 `@nestjs/schedule` 依赖
+   - 文件：`package.json`
+
+### 新增ESP32健康检查IP监控和告警功能
+
+1. **实现IP请求监控和超时告警**
+   - 功能：监控每个IP的健康检查请求，如果某个IP超过1分钟未发送请求，则触发告警
+   - 文件：`src/modules/esp32/esp32.service.ts`、`src/modules/esp32/esp32.controller.ts`
+   - 实现内容：
+     - 在 `checkHealth` 方法中获取客户端IP地址
+     - 使用 `Map` 记录每个IP的最后请求时间
+     - 实现 `OnModuleInit` 和 `OnModuleDestroy` 生命周期钩子
+     - 启动定时器，每30秒检查一次超时的IP
+     - 超时时间设置为1分钟（60000毫秒）
+     - 当IP超时时，调用 `SystemLogService.logAlert` 记录告警日志
+     - 避免重复告警：已告警的IP在1分钟内不会再次触发告警
+     - 当IP恢复请求时，自动清除告警记录
+   - 技术细节：
+     - 使用 `OnModuleInit` 在服务启动时启动定时检查
+     - 使用 `OnModuleDestroy` 在服务停止时清理定时器
+     - 支持从 `x-forwarded-for` 请求头获取真实IP（适用于反向代理场景）
+     - 告警信息包含IP地址、最后请求时间和超时分钟数
+   - 依赖：已注入 `SystemLogService` 用于记录告警日志
+
