@@ -8,7 +8,7 @@
  */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { BookModule } from './modules/book/book.module';
@@ -16,6 +16,7 @@ import { ArticleModule } from './modules/article/article.module';
 import { HealthController } from './health/health.controller';
 import { RoleModule } from './modules/role/role.module';
 import { FileModule } from './modules/file/file.module';
+import { Esp32Module } from './modules/esp32/esp32.module';
 
 @Module({
   imports: [
@@ -25,17 +26,21 @@ import { FileModule } from './modules/file/file.module';
       expandVariables: true,
       cache: true,
     }),
-    TypeOrmModule.forRoot({
-      type: process.env.DB_TYPE as any,
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT, 10),
-      username: process.env.DB_USERNAME,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_DATABASE,
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      logging: process.env.LOG_ON === 'true',
-      synchronize: true,
-      logger: process.env.LOG_LEVEL as any,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: configService.get<string>('DB_TYPE') as any,
+        host: configService.get<string>('DB_HOST'),
+        port: parseInt(configService.get<string>('DB_PORT') || '3306', 10),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [__dirname + '/**/*.entity{.ts,.js}'],
+        logging: configService.get<string>('LOG_ON') === 'true',
+        synchronize: true,
+        logger: configService.get<string>('LOG_LEVEL') as any,
+      }),
+      inject: [ConfigService],
     }),
     AuthModule,
     UserModule,
@@ -43,6 +48,7 @@ import { FileModule } from './modules/file/file.module';
     ArticleModule,
     RoleModule,
     FileModule,
+    Esp32Module,
   ],
   controllers: [HealthController],
 })
