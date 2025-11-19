@@ -25,6 +25,7 @@ import { UserActionModule } from './modules/userAction/user-action.module';
 import { DictionaryModule } from './modules/dictionary/dictionary.module';
 import { AiModule } from './modules/ai/ai.module';
 import { Esp32Module } from './modules/esp32/esp32.module';
+import { NotificationTaskModule } from './modules/notification-task/notification-task.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { Esp32Module } from './modules/esp32/esp32.module';
     UserActionModule,
     DictionaryModule,
     AiModule,
+    NotificationTaskModule,
   ],
   controllers: [HealthController],
 })

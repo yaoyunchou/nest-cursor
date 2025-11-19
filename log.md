@@ -1,5 +1,59 @@
 # 变更日志
 
+## 2025-01-23
+
+### 新增通知任务模块
+
+1. **通知任务模块开发完成**
+   - 实现了完整的通知任务管理系统
+   - 支持多种通知渠道：飞书、微信小程序、微信公众号、URL
+   - 支持多种调度策略：一次性、间隔、每日、每周、每月
+   - 实现了任务创建、查询、更新、删除、暂停、恢复功能
+   - 实现了自动调度执行和手动执行功能
+
+2. **核心功能特点**
+   - **多渠道支持**：飞书开放平台API、微信小程序订阅消息、微信公众号模板消息、URL通知
+   - **灵活调度**：支持一次性、间隔（每隔xx小时）、每日、每周、每月等多种调度方式
+   - **任务管理**：完整的CRUD操作，支持任务暂停和恢复
+   - **执行记录**：详细记录每次通知执行的请求和响应数据
+   - **自动调度**：使用@nestjs/schedule实现定时任务，每分钟检查并执行到期任务
+
+3. **技术实现亮点**
+   - 使用TypeORM实现数据持久化
+   - 使用@nestjs/schedule实现定时任务调度
+   - 将不同通知方式封装为独立的notifier文件（feishu.notifier.ts、wechat-mini.notifier.ts、wechat-mp.notifier.ts、url.notifier.ts）
+   - 统一的NotificationService作为调用入口
+   - 支持URL通知的模板变量替换（如{userId}、{userName}等）
+   - 完善的错误处理和日志记录
+
+4. **数据模型设计**
+   - **NotificationTask实体**：任务主表，包含任务信息、渠道配置、调度配置、执行状态等
+   - **NotificationLog实体**：执行日志表，记录每次通知执行的详细信息
+   - 支持JSON字段存储灵活的配置信息
+
+5. **API接口设计**
+   - `POST /notification-task`：创建通知任务（需要admin或editor权限）
+   - `GET /notification-task`：查询任务列表（支持分页和筛选）
+   - `GET /notification-task/:id`：查询任务详情
+   - `PUT /notification-task/:id`：更新任务（需要admin或editor权限）
+   - `DELETE /notification-task/:id`：删除任务（需要admin权限）
+   - `POST /notification-task/:id/pause`：暂停任务（需要admin或editor权限）
+   - `POST /notification-task/:id/resume`：恢复任务（需要admin或editor权限）
+   - `POST /notification-task/:id/execute`：手动执行任务（测试用，需要admin或editor权限）
+
+6. **通知方式实现**
+   - **飞书通知**：使用飞书开放平台API，支持发送文本消息给指定用户
+   - **微信小程序通知**：发送订阅消息，自动格式化模板数据
+   - **微信公众号通知**：发送模板消息，支持自定义颜色
+   - **URL通知**：支持GET/POST/PUT/DELETE方法，支持自定义请求头和请求体，支持模板变量替换
+
+7. **调度策略实现**
+   - **一次性**：在指定时间执行一次
+   - **间隔**：从开始时间起，每隔指定小时数执行
+   - **每日**：每天指定时间执行
+   - **每周**：每周指定星期几的指定时间执行
+   - **每月**：每月指定日期的指定时间执行
+
 ## 2025-01-22
 
 ### 修复角色唯一索引冲突错误

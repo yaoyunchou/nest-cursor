@@ -122,11 +122,23 @@ export class Esp32Service implements OnModuleInit, OnModuleDestroy {
 
   /**
    * 启动健康检查定时器
+   * 使用递归 setTimeout 确保上一次检查完成后再执行下一次，避免并发执行
    */
   private startHealthCheckTimer(): void {
-    this.checkTimer = setInterval(() => {
-      this.checkTimeoutBindingIds();
-    }, this.checkInterval);
+    const scheduleNext = () => {
+      this.checkTimer = setTimeout(async () => {
+        try {
+          await this.checkTimeoutBindingIds();
+        } catch (error) {
+          this.logger.error(`健康检查执行失败: ${error.message}`, error.stack);
+        } finally {
+          // 无论成功或失败，都安排下一次检查
+          scheduleNext();
+        }
+      }, this.checkInterval);
+    };
+    // 启动第一次检查
+    scheduleNext();
   }
 
   /**
@@ -144,14 +156,22 @@ export class Esp32Service implements OnModuleInit, OnModuleDestroy {
       }
     }
     // 为超时的bindingId触发告警并移除记录
-    for (const bindingId of timeoutBindingIds) {
+    // 使用 Promise.all 并行处理多个告警，提高效率
+    const alertPromises = timeoutBindingIds.map(async (bindingId) => {
       const lastRequestTime = this.bindingIdLastRequestTime.get(bindingId);
       if (lastRequestTime) {
-        await this.triggerAlert(bindingId, lastRequestTime, now);
-        // 告警后移除该bindingId的记录，等待下次请求重新开始计时
-        this.bindingIdLastRequestTime.delete(bindingId);
+        try {
+          await this.triggerAlert(bindingId, lastRequestTime, now);
+          // 告警后移除该bindingId的记录，等待下次请求重新开始计时
+          this.bindingIdLastRequestTime.delete(bindingId);
+        } catch (error) {
+          this.logger.error(`触发告警失败 (bindingId: ${bindingId}): ${error.message}`, error.stack);
+          // 即使告警失败，也移除记录，避免重复告警
+          this.bindingIdLastRequestTime.delete(bindingId);
+        }
       }
-    }
+    });
+    await Promise.all(alertPromises);
   }
 
   /**
