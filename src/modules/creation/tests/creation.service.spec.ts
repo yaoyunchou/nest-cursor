@@ -67,6 +67,7 @@ describe('CreationService', () => {
       const createCreationDto: CreateCreationDto = {
         title: '测试作品',
         prompt: '测试提示词',
+        type: 'text',
         images: ['https://example.com/image.jpg'],
         isPublic: false,
       };
@@ -94,6 +95,7 @@ describe('CreationService', () => {
       const createCreationDto: CreateCreationDto = {
         title: '测试作品',
         prompt: '测试提示词',
+        type: 'text',
       };
       const userId = 1;
       const expectedCreation = { id: 1, ...createCreationDto, userId, images: [] };

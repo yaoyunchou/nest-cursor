@@ -1,11 +1,34 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { UserActionService } from '../user-action.service';
+import { UserActionEntity } from '../entities/user-action.entity';
 import { CheckInDto, CheckInType } from '../dto/check-in.dto';
 
 describe('UserActionService', () => {
   let service: UserActionService;
+  let repository: Repository<UserActionEntity>;
 
-  beforeEach(() => {
-    service = new UserActionService();
+  const mockRepository = {
+    findOne: jest.fn(),
+    find: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserActionService,
+        {
+          provide: getRepositoryToken(UserActionEntity),
+          useValue: mockRepository,
+        },
+      ],
+    }).compile();
+
+    service = module.get<UserActionService>(UserActionService);
+    repository = module.get<Repository<UserActionEntity>>(getRepositoryToken(UserActionEntity));
   });
 
   it('应允许用户早晚各打卡一次', async () => {
@@ -43,8 +66,8 @@ describe('UserActionService', () => {
     };
     await service.executeCheckIn(input);
     const records = await service.getRecords({ userId: 'user3', date: '2024-06-03' });
-    expect(records.length).toBe(1);
-    expect(records[0].userId).toBe('user3');
-    expect(records[0].date).toBe('2024-06-03');
+    expect(records.list.length).toBe(1);
+    expect(records.list[0].userId).toBe('user3');
+    expect(records.list[0].date).toBe('2024-06-03');
   });
 }); 

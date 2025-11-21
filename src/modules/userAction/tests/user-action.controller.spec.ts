@@ -30,16 +30,25 @@ describe('UserActionController', () => {
       type: CheckInType.Morning,
       checkInTime: '2024-06-01T08:00:00Z',
     };
-    mockUserActionService.executeCheckIn.mockResolvedValue({ id: '1', ...input, date: '2024-06-01' });
-    const result = await controller.executeCheckIn(input);
-    expect(service.executeCheckIn).toHaveBeenCalledWith(input);
-    expect(result.id).toBe('1');
+    const mockUser = { userId: 'user1' };
+    const mockResult = { ...input, date: '2024-06-01', continuousCheckInCount: 1 };
+    mockUserActionService.executeCheckIn.mockResolvedValue(mockResult);
+    const result = await controller.executeCheckIn(input, mockUser);
+    expect(service.executeCheckIn).toHaveBeenCalledWith({ ...input, userId: 'user1' });
+    expect(result.userId).toBe('user1');
   });
 
   it('应调用服务查询打卡记录', async () => {
-    mockUserActionService.getRecords.mockResolvedValue([{ id: '2', userId: 'user2', type: CheckInType.Evening, checkInTime: '2024-06-01T20:00:00Z', date: '2024-06-01' }]);
-    const result = await controller.getRecords('user2', '2024-06-01');
+    const mockUser = { userId: 'user2' };
+    const mockResult = {
+      list: [{ userId: 'user2', type: CheckInType.Evening, checkInTime: '2024-06-01T20:00:00Z', date: '2024-06-01', continuousCheckInCount: 1 }],
+      total: 1,
+      page: 1,
+      pageSize: 10,
+    };
+    mockUserActionService.getRecords.mockResolvedValue(mockResult);
+    const result = await controller.getRecords(mockUser, '2024-06-01');
     expect(service.getRecords).toHaveBeenCalledWith({ userId: 'user2', date: '2024-06-01' });
-    expect(result.length).toBe(1);
+    expect(result.list.length).toBe(1);
   });
 }); 

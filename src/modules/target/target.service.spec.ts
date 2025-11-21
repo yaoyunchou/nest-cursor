@@ -60,6 +60,7 @@ describe('TargetService', () => {
   describe('create', () => {
     it('should create a new target', async () => {
       const createTargetDto = {
+        userId: 1,
         name: '测试目标',
         description: '测试描述',
         plannedHours: 100,

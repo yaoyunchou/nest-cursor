@@ -38,6 +38,20 @@ describe('CozeService', () => {
   };
 
   beforeEach(async () => {
+    // 先设置mock配置，再创建模块
+    mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+      const config = {
+        COZE_BASE_URL: 'https://api.coze.cn',
+        COZE_API_KEY: 'test_api_key',
+        COZE_DEFAULT_WORKFLOW_ID: 'test_workflow_id',
+        COZE_TIMEOUT: 30000,
+      };
+      return config[key] || defaultValue;
+    });
+
+    // Mock axios.create to return our mock instance
+    mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CozeService,
@@ -50,20 +64,6 @@ describe('CozeService', () => {
 
     service = module.get<CozeService>(CozeService);
     configService = module.get<ConfigService>(ConfigService);
-
-    // Mock axios.create to return our mock instance
-    mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
-
-    // Setup default config values
-    mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
-      const config = {
-        COZE_BASE_URL: 'https://api.coze.cn',
-        COZE_API_KEY: 'test_api_key',
-        COZE_DEFAULT_WORKFLOW_ID: 'test_workflow_id',
-        COZE_TIMEOUT: 30000,
-      };
-      return config[key] || defaultValue;
-    });
   });
 
   afterEach(() => {

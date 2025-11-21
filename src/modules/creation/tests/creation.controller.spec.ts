@@ -9,8 +9,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CreationController } from '../creation.controller';
 import { CreationService } from '../creation.service';
+import { CozeService } from '../services/coze.service';
 import { CreateCreationDto } from '../dto/create-creation.dto';
 import { QueryCreationDto } from '../dto/query-creation.dto';
+import { JwtUserDto } from '../../user/dto/jwt.user.dto';
 
 describe('CreationController', () => {
   let controller: CreationController;
@@ -31,6 +33,14 @@ describe('CreationController', () => {
     getUserCollections: jest.fn(),
   };
 
+  const mockCozeService = {
+    generateImage: jest.fn(),
+    runWorkflow: jest.fn(),
+    getTaskStatus: jest.fn(),
+    uploadFile: jest.fn(),
+    getServiceInfo: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CreationController],
@@ -38,6 +48,10 @@ describe('CreationController', () => {
         {
           provide: CreationService,
           useValue: mockCreationService,
+        },
+        {
+          provide: CozeService,
+          useValue: mockCozeService,
         },
       ],
     }).compile();
@@ -56,16 +70,21 @@ describe('CreationController', () => {
       const createCreationDto: CreateCreationDto = {
         title: '测试作品',
         prompt: '测试提示词',
+        type: 'text',
         images: ['https://example.com/image.jpg'],
         isPublic: false,
       };
-      const mockRequest = { user: { id: 1 } };
+      const mockUser: JwtUserDto = {
+        userId: 1,
+        username: 'testuser',
+        roles: ['user'],
+      };
       const expectedCreation = { id: 1, ...createCreationDto, userId: 1 };
 
       mockCreationService.create.mockResolvedValue(expectedCreation);
 
       // 行动
-      const actualCreation = await controller.create(createCreationDto, mockRequest);
+      const actualCreation = await controller.create(createCreationDto, mockUser);
 
       // 断言
       expect(mockCreationService.create).toHaveBeenCalledWith(createCreationDto, 1);
@@ -77,13 +96,19 @@ describe('CreationController', () => {
       const createCreationDto: CreateCreationDto = {
         title: '测试作品',
         prompt: '测试提示词',
+        type: 'text',
+      };
+      const mockUser: JwtUserDto = {
+        userId: 1,
+        username: 'testuser',
+        roles: ['user'],
       };
       const expectedCreation = { id: 1, ...createCreationDto, userId: 1 };
 
       mockCreationService.create.mockResolvedValue(expectedCreation);
 
       // 行动
-      const actualCreation = await controller.create(createCreationDto);
+      const actualCreation = await controller.create(createCreationDto, mockUser);
 
       // 断言
       expect(mockCreationService.create).toHaveBeenCalledWith(createCreationDto, 1);
@@ -97,9 +122,13 @@ describe('CreationController', () => {
       const query: QueryCreationDto = {
         title: '测试',
         page: 1,
-        limit: 10,
+        pageSize: 10,
       };
-      const mockRequest = { user: { id: 1 } };
+      const mockUser: JwtUserDto = {
+        userId: 1,
+        username: 'testuser',
+        roles: ['user'],
+      };
       const expectedResult = {
         list: [],
         total: 0,
@@ -110,7 +139,7 @@ describe('CreationController', () => {
       mockCreationService.findAll.mockResolvedValue(expectedResult);
 
       // 行动
-      const actualResult = await controller.findAll(query, mockRequest);
+      const actualResult = await controller.findAll(query, mockUser);
 
       // 断言
       expect(mockCreationService.findAll).toHaveBeenCalledWith(query, 1);
@@ -123,7 +152,7 @@ describe('CreationController', () => {
       // 安排
       const query: QueryCreationDto = {
         page: 1,
-        limit: 10,
+        pageSize: 10,
       };
       const expectedResult = {
         list: [],
@@ -147,7 +176,11 @@ describe('CreationController', () => {
     it('应该成功查询单个作品', async () => {
       // 安排
       const id = 1;
-      const mockRequest = { user: { id: 1 } };
+      const mockUser: JwtUserDto = {
+        userId: 1,
+        username: 'testuser',
+        roles: ['user'],
+      };
       const expectedCreation = {
         id: 1,
         title: '测试作品',
@@ -157,7 +190,7 @@ describe('CreationController', () => {
       mockCreationService.findOne.mockResolvedValue(expectedCreation);
 
       // 行动
-      const actualCreation = await controller.findOne(id, mockRequest);
+      const actualCreation = await controller.findOne(id, mockUser);
 
       // 断言
       expect(mockCreationService.findOne).toHaveBeenCalledWith(id, 1);
@@ -169,12 +202,16 @@ describe('CreationController', () => {
     it('应该成功删除作品', async () => {
       // 安排
       const id = 1;
-      const mockRequest = { user: { id: 1 } };
+      const mockUser: JwtUserDto = {
+        userId: 1,
+        username: 'testuser',
+        roles: ['user'],
+      };
 
       mockCreationService.remove.mockResolvedValue(undefined);
 
       // 行动
-      const actualResult = await controller.remove(id, mockRequest);
+      const actualResult = await controller.remove(id, mockUser);
 
       // 断言
       expect(mockCreationService.remove).toHaveBeenCalledWith(id, 1);
@@ -186,7 +223,11 @@ describe('CreationController', () => {
     it('应该成功点赞作品', async () => {
       // 安排
       const id = 1;
-      const mockRequest = { user: { id: 2 } };
+      const mockUser: JwtUserDto = {
+        userId: 2,
+        username: 'testuser',
+        roles: ['user'],
+      };
       const expectedCreation = {
         id: 1,
         title: '测试作品',
@@ -196,7 +237,7 @@ describe('CreationController', () => {
       mockCreationService.likeCreation.mockResolvedValue(expectedCreation);
 
       // 行动
-      const actualCreation = await controller.likeCreation(id, mockRequest);
+      const actualCreation = await controller.likeCreation(id, mockUser);
 
       // 断言
       expect(mockCreationService.likeCreation).toHaveBeenCalledWith(id, 2);

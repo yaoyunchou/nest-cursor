@@ -1,5 +1,88 @@
 # 变更日志
 
+## 2025-01-23（晚上）
+
+### 为user和auth模块添加完整的测试用例
+
+1. **User模块测试用例**
+   - 为`UserService`创建了完整的测试用例（`user.service.spec.ts`）
+   - 为`UserController`创建了完整的测试用例（`user.controller.spec.ts`）
+
+2. **UserService测试覆盖**
+   - 测试了用户创建功能（包括默认角色分配）
+   - 测试了用户查询功能（列表查询、单个查询、按用户名查询）
+   - 测试了用户更新功能
+   - 测试了用户删除功能（包括关联目标的删除）
+   - 测试了密码更新功能（包括旧密码验证）
+   - 测试了角色管理功能（分配角色、移除角色、获取角色列表）
+   - 测试了密码重置功能（管理员权限验证）
+   - 测试了各种错误场景（用户不存在、密码错误、权限不足等）
+
+3. **UserController测试覆盖**
+   - 测试了所有API端点的调用
+   - 测试了错误处理（如用户不存在时抛出NotFoundException）
+   - 测试了当前用户信息获取功能
+
+4. **Auth模块测试用例**
+   - 为`AuthService`创建了完整的测试用例（`auth.service.spec.ts`）
+   - 为`AuthController`创建了完整的测试用例（`auth.controller.spec.ts`）
+
+5. **AuthService测试覆盖**
+   - 测试了用户登录功能（包括密码验证和JWT生成）
+   - 测试了用户注册功能（包括用户名冲突检查）
+   - 测试了微信小程序登录功能（包括新用户创建、已存在用户登录、未提供手机号的情况）
+   - 测试了微信access_token获取功能
+   - 测试了用户手机号获取功能
+   - 测试了各种错误场景（用户不存在、密码错误、微信API错误等）
+   - Mock了外部API调用（微信API、fetch等）
+
+6. **AuthController测试覆盖**
+   - 测试了所有API端点的调用
+   - 测试了错误处理
+
+7. **测试规范遵循**
+   - 遵循"安排-行动-断言"（AAA）测试模式
+   - 使用清晰的测试变量命名
+   - 使用测试替身（mock）模拟依赖和外部API
+   - 覆盖主要功能和错误场景
+
+## 2025-01-23（下午）
+
+### 为通知任务模块添加完整的测试用例
+
+1. **测试用例覆盖**
+   - 为`NotificationService`创建了完整的测试用例（`notification.service.spec.ts`）
+   - 为`NotificationTaskService`创建了完整的测试用例（`notification-task.service.spec.ts`）
+   - 为`NotificationTaskController`创建了完整的测试用例（`notification-task.controller.spec.ts`）
+
+2. **NotificationService测试用例**
+   - 测试了所有通知渠道的发送功能（飞书、微信小程序、微信公众号、URL）
+   - 测试了各种错误场景（用户不存在、微信账号配置不存在、用户未绑定openid等）
+   - 测试了URL通知的模板变量替换功能
+   - 测试了默认参数的处理（如URL通知的默认POST方法）
+
+3. **NotificationTaskService测试用例**
+   - 测试了任务的CRUD操作（创建、查询、更新、删除）
+   - 测试了任务状态管理（暂停、恢复）
+   - 测试了各种调度类型的下次执行时间计算（一次性、间隔、每日、每周、每月）
+   - 测试了任务执行信息更新逻辑
+   - 测试了分页和筛选功能
+
+4. **NotificationTaskController测试用例**
+   - 测试了所有API端点的调用
+   - 测试了错误处理（如任务不存在时抛出NotFoundException）
+   - 测试了手动执行任务功能
+
+5. **Jest配置优化**
+   - 在`package.json`的Jest配置中添加了`moduleNameMapper`，支持路径别名`@/*`的解析
+   - 确保测试能够正确解析使用路径别名的导入
+
+6. **测试规范遵循**
+   - 遵循"安排-行动-断言"（AAA）测试模式
+   - 使用清晰的测试变量命名（mockX、expectedX、actualX）
+   - 为每个公共方法编写了单元测试
+   - 使用测试替身（mock）模拟依赖
+
 ## 2025-01-23
 
 ### 新增通知任务模块
