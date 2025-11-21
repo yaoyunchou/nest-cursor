@@ -100,7 +100,7 @@ export class CozeService {
         privateKey: this.config.private_key
       });
       this.accessToken  = jwtToken.access_token
-      this.tokenExpiresAt = jwtToken.expires_in
+      this.tokenExpiresAt = jwtToken.expires_in * 1000 + Date.now()
       console.log('getJWTToken', jwtToken);
      
       return jwtToken.access_token;
@@ -292,11 +292,11 @@ export class CozeService {
    */
   getServiceInfo(): Record<string, any> {
     return {
-      baseUrl: this.config.baseUrl,
-      hasApiKey: !!this.config.apiKey,
+      baseUrl: this.config.coze_api_base,
+      hasApiKey: !!this.config.private_key,
       hasDefaultWorkflowId: !!this.config.defaultWorkflowId,
       timeout: this.config.timeout,
-      hasValidToken: this.accessToken && Date.now() < this.tokenExpiresAt,
+      hasValidToken: !!(this.accessToken && Date.now() < this.tokenExpiresAt),
     };
   }
 

@@ -142,7 +142,7 @@ describe('CreationController', () => {
       const actualResult = await controller.findAll(query, mockUser);
 
       // 断言
-      expect(mockCreationService.findAll).toHaveBeenCalledWith(query, 1);
+      expect(mockCreationService.findAll).toHaveBeenCalledWith(query, 1, true);
       expect(actualResult).toEqual(expectedResult);
     });
   });

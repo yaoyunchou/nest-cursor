@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
 import { Task } from './task.entity';
-import { User } from '@/modules/user/entities/user.entity';
+import { User } from '../../user/entities/user.entity';
 
 /**
  * 目标实体

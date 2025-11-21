@@ -1,5 +1,29 @@
 # 变更日志
 
+## 2025-01-23（晚上 - 测试修复）
+
+### 修复单元测试中的多个问题
+
+1. **CreationController测试修复**
+   - 问题：缺少CozeService依赖注入
+   - 修复：在测试模块中添加CozeService的mock提供者
+   - 文件：`src/modules/creation/tests/creation.controller.spec.ts`
+
+2. **UserActionService测试修复**
+   - 问题：测试使用了过去的日期，但代码要求打卡日期必须是今天
+   - 修复：使用dayjs获取今天的日期，并正确设置所有mock返回值
+   - 文件：`src/modules/userAction/tests/user-action.service.spec.ts`
+
+3. **UserService测试修复**
+   - 问题：getManyAndCount mock设置方式不一致
+   - 修复：统一使用`jest.fn().mockResolvedValue()`方式设置mock
+   - 文件：`src/modules/user/user.service.spec.ts`
+
+4. **测试修复总结**
+   - 修复了10个测试套件中的编译错误和运行时错误
+   - 所有修复遵循AAA测试模式（安排-行动-断言）
+   - 确保mock数据格式与实际返回格式一致
+
 ## 2025-01-23（晚上）
 
 ### 为user和auth模块添加完整的测试用例

@@ -14,7 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from '../user/dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
 import { WechatLoginDto } from './dto/wechat-login.dto';
-import { RedisService } from '@/core/services/redis/redis.service';
+import { RedisService } from '../../core/services/redis/redis.service';
 import { DictionaryService } from '../dictionary/dictionary.service';
 
 @Injectable()
@@ -77,7 +77,7 @@ export class AuthService {
    * @param accountId 账号ID（可选，如果不提供则使用第一个账号）
    * @returns 微信账号配置
    */
-  private async getWechatAccountConfig(accountId: string = "550e8400-e29b-41d4-a716-446655440000") {
+  private async getWechatAccountConfig(accountId?: string) {
     const dictionary = await this.dictionaryService.findByCategoryAndName('wechat', 'wechat_mini_program_account');
     if (!dictionary) {
       throw new HttpException('未配置微信小程序账号', HttpStatus.INTERNAL_SERVER_ERROR);

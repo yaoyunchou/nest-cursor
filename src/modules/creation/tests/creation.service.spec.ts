@@ -83,7 +83,7 @@ describe('CreationService', () => {
       // 断言
       expect(mockCreationRepository.create).toHaveBeenCalledWith({
         ...createCreationDto,
-        userId,
+        user: { id: userId },
         images: createCreationDto.images,
       });
       expect(mockCreationRepository.save).toHaveBeenCalledWith(expectedCreation);
@@ -109,7 +109,7 @@ describe('CreationService', () => {
       // 断言
       expect(mockCreationRepository.create).toHaveBeenCalledWith({
         ...createCreationDto,
-        userId,
+        user: { id: userId },
         images: [],
       });
       expect(actualCreation).toEqual(expectedCreation);
@@ -123,8 +123,8 @@ describe('CreationService', () => {
       const mockCreation = {
         id: 1,
         title: '测试作品',
-        isPublic: true,
-        userId: 1,
+        status: 1,
+        user: { id: 1 },
       };
 
       mockCreationRepository.findOne.mockResolvedValue(mockCreation);
@@ -160,8 +160,8 @@ describe('CreationService', () => {
       const mockCreation = {
         id: 1,
         title: '私有作品',
-        isPublic: false,
-        userId: 1,
+        status: 0,
+        user: { id: 1 },
       };
 
       mockCreationRepository.findOne.mockResolvedValue(mockCreation);
@@ -179,8 +179,8 @@ describe('CreationService', () => {
       const mockCreation = {
         id: 1,
         title: '测试作品',
-        isPublic: true,
-        userId: 1,
+        status: 1,
+        user: { id: 1 },
         likes: 5,
       };
       const expectedCreation = { ...mockCreation, likes: 6 };
@@ -203,8 +203,8 @@ describe('CreationService', () => {
       const mockCreation = {
         id: 1,
         title: '私有作品',
-        isPublic: false,
-        userId: 1,
+        status: 0,
+        user: { id: 1 },
         likes: 5,
       };
 
@@ -221,8 +221,8 @@ describe('CreationService', () => {
       const mockCreation = {
         id: 1,
         title: '我的作品',
-        isPublic: true,
-        userId: 1,
+        status: 1,
+        user: { id: 1 },
         likes: 5,
       };
 

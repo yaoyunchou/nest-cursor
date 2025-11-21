@@ -11,18 +11,35 @@ import { ConfigService } from '@nestjs/config';
 import { CozeService } from '../services/coze.service';
 import { InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import axios from 'axios';
+import { getJWTToken } from '@coze/api';
 
 // Mock axios
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
+// Mock @coze/api
+jest.mock('@coze/api', () => ({
+  getJWTToken: jest.fn(),
+}));
+const mockedGetJWTToken = getJWTToken as jest.MockedFunction<typeof getJWTToken>;
+
 describe('CozeService', () => {
   let service: CozeService;
   let configService: ConfigService;
+  let mockConfigService: any;
 
-  const mockConfigService = {
-    get: jest.fn(),
-  };
+  const createMockConfigService = () => ({
+    get: jest.fn((key: string, defaultValue?: any) => {
+      const config: Record<string, any> = {
+        COZE_CLIENT_ID: 'test_client_id',
+        COZE_PRIVATE_KEY: 'test_api_key',
+        COZE_DEFAULT_WORKFLOW_ID: 'test_workflow_id',
+        COZE_PUBLIC_KEY_ID: 'test_public_key_id',
+        COZE_TIMEOUT: 30000,
+      };
+      return config[key] || defaultValue;
+    }),
+  });
 
   const mockAxiosInstance = {
     post: jest.fn(),
@@ -38,16 +55,7 @@ describe('CozeService', () => {
   };
 
   beforeEach(async () => {
-    // 先设置mock配置，再创建模块
-    mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
-      const config = {
-        COZE_BASE_URL: 'https://api.coze.cn',
-        COZE_API_KEY: 'test_api_key',
-        COZE_DEFAULT_WORKFLOW_ID: 'test_workflow_id',
-        COZE_TIMEOUT: 30000,
-      };
-      return config[key] || defaultValue;
-    });
+    mockConfigService = createMockConfigService();
 
     // Mock axios.create to return our mock instance
     mockedAxios.create.mockReturnValue(mockAxiosInstance as any);
@@ -72,20 +80,21 @@ describe('CozeService', () => {
 
   describe('构造函数', () => {
     it('应该正确初始化配置', () => {
-      expect(mockConfigService.get).toHaveBeenCalledWith('COZE_BASE_URL', 'https://api.coze.cn');
-      expect(mockConfigService.get).toHaveBeenCalledWith('COZE_API_KEY');
+      expect(mockConfigService.get).toHaveBeenCalledWith('COZE_CLIENT_ID');
+      expect(mockConfigService.get).toHaveBeenCalledWith('COZE_PRIVATE_KEY');
       expect(mockConfigService.get).toHaveBeenCalledWith('COZE_DEFAULT_WORKFLOW_ID');
-      expect(mockConfigService.get).toHaveBeenCalledWith('COZE_TIMEOUT', 30000);
+      expect(mockConfigService.get).toHaveBeenCalledWith('COZE_PUBLIC_KEY_ID');
     });
 
     it('应该在没有API_KEY时抛出错误', () => {
-      mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'COZE_API_KEY') return undefined;
+      const mockConfigWithoutKey = createMockConfigService();
+      mockConfigWithoutKey.get.mockImplementation((key: string) => {
+        if (key === 'COZE_PRIVATE_KEY') return undefined;
         return 'default_value';
       });
 
       expect(() => {
-        new CozeService(mockConfigService as any);
+        new CozeService(mockConfigWithoutKey as any);
       }).toThrow('COZE_API_KEY环境变量未配置');
     });
   });
@@ -93,46 +102,35 @@ describe('CozeService', () => {
   describe('getAccessToken', () => {
     it('应该成功获取访问令牌', async () => {
       // 安排
-      const mockTokenResponse = {
-        data: {
-          access_token: 'test_access_token',
-          token_type: 'Bearer',
-          expires_in: 3600,
-        },
+      const mockJWTTokenResponse = {
+        access_token: 'test_access_token',
+        expires_in: 3600, // 秒数
       };
 
-      mockAxiosInstance.post.mockResolvedValue(mockTokenResponse);
+      mockedGetJWTToken.mockResolvedValue(mockJWTTokenResponse);
 
       // 行动
       const actualToken = await service.getAccessToken();
 
       // 断言
-      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
-        '/api/permission/oauth2/token',
-        {
-          duration_seconds: 86399,
-          grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        },
-        {
-          headers: {
-            Authorization: 'Bearer test_api_key',
-          },
-        },
-      );
+      expect(mockedGetJWTToken).toHaveBeenCalledWith({
+        baseURL: 'https://api.coze.cn',
+        appId: 'test_client_id',
+        aud: 'api.coze.cn',
+        keyid: 'test_public_key_id',
+        privateKey: 'test_api_key',
+      });
       expect(actualToken).toBe('test_access_token');
     });
 
     it('应该缓存有效的访问令牌', async () => {
       // 安排
-      const mockTokenResponse = {
-        data: {
-          access_token: 'cached_token',
-          token_type: 'Bearer',
-          expires_in: 3600,
-        },
+      const mockJWTTokenResponse = {
+        access_token: 'cached_token',
+        expires_in: 3600, // 秒数
       };
 
-      mockAxiosInstance.post.mockResolvedValue(mockTokenResponse);
+      mockedGetJWTToken.mockResolvedValue(mockJWTTokenResponse);
 
       // 行动 - 第一次调用
       const firstToken = await service.getAccessToken();
@@ -141,20 +139,15 @@ describe('CozeService', () => {
       const secondToken = await service.getAccessToken();
 
       // 断言
-      expect(mockAxiosInstance.post).toHaveBeenCalledTimes(1);
+      expect(mockedGetJWTToken).toHaveBeenCalledTimes(1);
       expect(firstToken).toBe(secondToken);
     });
 
     it('应该在API调用失败时抛出异常', async () => {
       // 安排
-      const mockError = {
-        response: {
-          data: { error: 'Unauthorized' },
-        },
-        message: 'Request failed',
-      };
+      const mockError = new Error('获取JWT Token失败');
 
-      mockAxiosInstance.post.mockRejectedValue(mockError);
+      mockedGetJWTToken.mockRejectedValue(mockError);
 
       // 行动 & 断言
       await expect(service.getAccessToken()).rejects.toThrow(InternalServerErrorException);
@@ -166,8 +159,9 @@ describe('CozeService', () => {
       // 安排
       const workflowId = 'test_workflow';
       const parameters = { prompt: '测试提示词' };
-      const mockTokenResponse = {
-        data: { access_token: 'test_token', expires_in: 3600 },
+      const mockJWTTokenResponse = {
+        access_token: 'test_token',
+        expires_in: 3600, // 秒数
       };
       const mockWorkflowResponse = {
         data: {
@@ -178,9 +172,8 @@ describe('CozeService', () => {
         },
       };
 
-      mockAxiosInstance.post
-        .mockResolvedValueOnce(mockTokenResponse) // 获取token
-        .mockResolvedValueOnce(mockWorkflowResponse); // 运行工作流
+      mockedGetJWTToken.mockResolvedValue(mockJWTTokenResponse);
+      mockAxiosInstance.post.mockResolvedValue(mockWorkflowResponse);
 
       // 行动
       const actualResult = await service.runWorkflow(workflowId, parameters);
@@ -208,8 +201,9 @@ describe('CozeService', () => {
       // 安排
       const prompt = '画一只可爱的小猫';
       const additionalParams = { style: 'cartoon' };
-      const mockTokenResponse = {
-        data: { access_token: 'test_token', expires_in: 3600 },
+      const mockJWTTokenResponse = {
+        access_token: 'test_token',
+        expires_in: 3600, // 秒数
       };
       const mockWorkflowResponse = {
         data: {
@@ -220,9 +214,8 @@ describe('CozeService', () => {
         },
       };
 
-      mockAxiosInstance.post
-        .mockResolvedValueOnce(mockTokenResponse)
-        .mockResolvedValueOnce(mockWorkflowResponse);
+      mockedGetJWTToken.mockResolvedValue(mockJWTTokenResponse);
+      mockAxiosInstance.post.mockResolvedValue(mockWorkflowResponse);
 
       // 行动
       const actualResult = await service.generateImage(prompt, additionalParams);
@@ -246,13 +239,15 @@ describe('CozeService', () => {
 
     it('应该在没有默认工作流ID时抛出异常', async () => {
       // 安排
-      mockConfigService.get.mockImplementation((key: string) => {
+      const mockConfigWithoutWorkflow = createMockConfigService();
+      mockConfigWithoutWorkflow.get.mockImplementation((key: string) => {
         if (key === 'COZE_DEFAULT_WORKFLOW_ID') return undefined;
+        if (key === 'COZE_PRIVATE_KEY') return 'test_api_key';
         return 'default_value';
       });
 
       // 重新创建服务实例
-      const newService = new CozeService(mockConfigService as any);
+      const newService = new CozeService(mockConfigWithoutWorkflow as any);
 
       // 行动 & 断言
       await expect(newService.generateImage('test prompt')).rejects.toThrow(BadRequestException);

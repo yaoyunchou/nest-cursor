@@ -193,14 +193,16 @@ describe('UserService', () => {
         },
       ];
 
-      const queryBuilder = mockUserRepository.createQueryBuilder();
+      const queryBuilder = createMockQueryBuilder();
       queryBuilder.getManyAndCount = jest.fn().mockResolvedValue([mockUsers, 2]);
+      mockUserRepository.createQueryBuilder.mockReturnValue(queryBuilder);
 
       // 行动
       const actualResult = await service.findAll(query);
 
       // 断言
-      expect(mockUserRepository.createQueryBuilder).toHaveBeenCalled();
+      expect(mockUserRepository.createQueryBuilder).toHaveBeenCalledWith('user');
+      expect(queryBuilder.getManyAndCount).toHaveBeenCalled();
       expect(actualResult.list).toHaveLength(2);
       expect(actualResult.total).toBe(2);
       expect(actualResult.pageSize).toBe(10);
@@ -215,8 +217,9 @@ describe('UserService', () => {
         username: 'test',
       };
 
-      const queryBuilder = mockUserRepository.createQueryBuilder();
-      queryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
+      const queryBuilder = createMockQueryBuilder();
+      queryBuilder.getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+      mockUserRepository.createQueryBuilder.mockReturnValue(queryBuilder);
 
       // 行动
       await service.findAll(query);
@@ -233,8 +236,9 @@ describe('UserService', () => {
         email: 'test@example.com',
       };
 
-      const queryBuilder = mockUserRepository.createQueryBuilder();
-      queryBuilder.getManyAndCount.mockResolvedValue([[], 0]);
+      const queryBuilder = createMockQueryBuilder();
+      queryBuilder.getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+      mockUserRepository.createQueryBuilder.mockReturnValue(queryBuilder);
 
       // 行动
       await service.findAll(query);

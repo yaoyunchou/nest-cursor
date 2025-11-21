@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { UserService } from '../user/user.service';
-import { RedisService } from '@/core/services/redis/redis.service';
+import { RedisService } from '../../core/services/redis/redis.service';
 import { DictionaryService } from '../dictionary/dictionary.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -56,6 +56,9 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
+    // 重置所有mock
+    jest.clearAllMocks();
+    
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -218,6 +221,7 @@ describe('AuthService', () => {
       const wechatLoginDto: WechatLoginDto = {
         code: 'test-code',
         phone: '13800138000',
+        accountId: 'test-account-id',
       };
 
       const mockDictionary = {
@@ -274,6 +278,7 @@ describe('AuthService', () => {
         username: 'newuser',
         avatar: 'test-avatar',
         phone: '13800138000',
+        accountId: 'test-account-id',
       };
 
       const mockDictionary = {
@@ -326,6 +331,7 @@ describe('AuthService', () => {
         code: 'test-code',
         username: 'newuser',
         avatar: 'test-avatar',
+        accountId: 'test-account-id',
       };
 
       const mockDictionary = {
@@ -372,6 +378,7 @@ describe('AuthService', () => {
       // 安排
       const wechatLoginDto: WechatLoginDto = {
         code: 'invalid-code',
+        accountId: 'test-account-id',
       };
 
       const mockDictionary = {
@@ -430,7 +437,7 @@ describe('AuthService', () => {
       });
 
       // 行动
-      const actualToken = await service.getAccessToken();
+      const actualToken = await service.getAccessToken('test-account-id');
 
       // 断言
       expect(actualToken).toBe('test-access-token');
@@ -463,7 +470,7 @@ describe('AuthService', () => {
       });
 
       // 行动 & 断言
-      await expect(service.getAccessToken()).rejects.toThrow(HttpException);
+      await expect(service.getAccessToken('test-account-id')).rejects.toThrow(HttpException);
     });
   });
 
