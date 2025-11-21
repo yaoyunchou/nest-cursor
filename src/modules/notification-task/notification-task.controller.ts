@@ -15,6 +15,7 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Request,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { NotificationTaskService } from './notification-task.service';
@@ -25,6 +26,7 @@ import { NotificationService } from './services/notification.service';
 import { NotificationTask } from './entities/notification-task.entity';
 import { Roles, UserRole } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UseGuards } from '@nestjs/common';
 
 /**
@@ -33,7 +35,7 @@ import { UseGuards } from '@nestjs/common';
 @ApiTags('通知任务管理')
 @ApiBearerAuth()
 @Controller('notification-task')
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class NotificationTaskController {
   constructor(
     private readonly taskService: NotificationTaskService,
@@ -44,7 +46,12 @@ export class NotificationTaskController {
   @ApiOperation({ summary: '创建通知任务' })
   @ApiResponse({ status: 201, description: '创建成功', type: NotificationTask })
   @Roles(UserRole.ADMIN, UserRole.EDITOR)
-  async create(@Body() createDto: CreateNotificationTaskDto): Promise<NotificationTask> {
+  async create(@Body() createDto: CreateNotificationTaskDto,  @Request() req: any): Promise<NotificationTask> {
+    const userId = req?.user?.userId ? parseInt(req.user.userId, 10) : undefined;
+    if (userId === undefined) {
+      throw new Error('用户ID不存在');
+    }
+    createDto.userId = userId;
     return await this.taskService.create(createDto);
   }
 

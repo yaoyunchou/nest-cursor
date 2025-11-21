@@ -5,7 +5,6 @@
  */
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule';
 import { NotificationTaskController } from './notification-task.controller';
 import { NotificationTaskService } from './notification-task.service';
 import { NotificationService } from './services/notification.service';
@@ -21,7 +20,6 @@ import { DictionaryModule } from '../dictionary/dictionary.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([NotificationTask, NotificationLog]),
-    ScheduleModule.forRoot(),
     UserModule,
     DictionaryModule,
   ],

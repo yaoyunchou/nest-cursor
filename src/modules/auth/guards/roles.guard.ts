@@ -37,6 +37,12 @@ export class RolesGuard implements CanActivate {
 
     const { user } = context.switchToHttp().getRequest();
     if (!user || !user.roles || !Array.isArray(user.roles)) {
+      console.log('[RolesGuard] 用户信息缺失:', { 
+        hasUser: !!user, 
+        hasRoles: !!(user && user.roles),
+        isArray: !!(user && user.roles && Array.isArray(user.roles)),
+        user: user ? { userId: user.userId, username: user.username } : null
+      });
       return false;
     }
     // 判断用户是否具有所需角色
@@ -64,6 +70,16 @@ export class RolesGuard implements CanActivate {
       const normalizedRole = role.toLowerCase();
       return userRoleCodes.includes(normalizedRole);
     });
+    
+    if (!result) {
+      console.log('[RolesGuard] 权限不足:', {
+        requiredRoles,
+        userRoleCodes,
+        userId: user.userId || user.id,
+        username: user.username
+      });
+    }
+    
     return result;
   }
 } 

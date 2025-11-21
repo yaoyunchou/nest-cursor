@@ -6,7 +6,7 @@ import axios from 'axios';
 /**
  * 微信小程序通知参数接口
  */
-export interface WechatMiniRunData {
+export interface WechatMiniNotificationData {
   appId: string;
   appSecret: string;
   openid: string;
@@ -18,7 +18,7 @@ export interface WechatMiniRunData {
 /**
  * 微信小程序通知返回结果接口
  */
-export interface WechatMiniRunResult {
+export interface WechatMiniNotificationResult {
   success: boolean;
   message?: string;
   data?: any;
@@ -55,11 +55,11 @@ async function getWechatAccessToken(appId: string, appSecret: string): Promise<s
 }
 
 /**
- * 微信小程序订阅消息通知方法
+ * 发送微信小程序订阅消息通知
  * @param data 通知数据
  * @returns 执行结果
  */
-export async function wechatMiniRun(data: WechatMiniRunData): Promise<WechatMiniRunResult> {
+export async function sendWechatMiniNotification(data: WechatMiniNotificationData): Promise<WechatMiniNotificationResult> {
   try {
     const { appId, appSecret, openid, templateId, page, data: templateData } = data;
     const accessToken = await getWechatAccessToken(appId, appSecret);

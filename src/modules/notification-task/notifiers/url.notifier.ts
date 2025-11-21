@@ -6,7 +6,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 /**
  * URL通知参数接口
  */
-export interface UrlRunData {
+export interface UrlNotificationData {
   url: string;
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
   headers?: Record<string, string>;
@@ -16,7 +16,7 @@ export interface UrlRunData {
 /**
  * URL通知返回结果接口
  */
-export interface UrlRunResult {
+export interface UrlNotificationResult {
   success: boolean;
   message?: string;
   data?: any;
@@ -61,12 +61,12 @@ function replaceObjectVariables(obj: any, variables: Record<string, any>): any {
 }
 
 /**
- * URL通知方法
+ * 发送URL通知
  * @param data 通知数据
  * @param variables 模板变量（可选，用于替换URL和body中的{变量名}）
  * @returns 执行结果
  */
-export async function urlRun(data: UrlRunData, variables?: Record<string, any>): Promise<UrlRunResult> {
+export async function sendUrlNotification(data: UrlNotificationData, variables?: Record<string, any>): Promise<UrlNotificationResult> {
   try {
     let { url, method = 'POST', headers = {}, body } = data;
     if (variables) {

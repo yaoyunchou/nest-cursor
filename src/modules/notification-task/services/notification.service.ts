@@ -3,10 +3,10 @@
  */
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { NotificationTask, NotificationChannel } from '../entities/notification-task.entity';
-import { feishuRun, FeishuRunData } from '../notifiers/feishu.notifier';
-import { wechatMiniRun, WechatMiniRunData } from '../notifiers/wechat-mini.notifier';
-import { wechatMpRun, WechatMpRunData } from '../notifiers/wechat-mp.notifier';
-import { urlRun, UrlRunData } from '../notifiers/url.notifier';
+import { sendFeishuNotification, FeishuNotificationData } from '../notifiers/feishu.notifier';
+import { sendWechatMiniNotification, WechatMiniNotificationData } from '../notifiers/wechat-mini.notifier';
+import { sendWechatMpNotification, WechatMpNotificationData } from '../notifiers/wechat-mp.notifier';
+import { sendUrlNotification, UrlNotificationData } from '../notifiers/url.notifier';
 import { DictionaryService } from '../../dictionary/dictionary.service';
 import { UserService } from '../../user/user.service';
 
@@ -52,7 +52,7 @@ export class NotificationService {
    * @returns 执行结果
    */
   async send(task: NotificationTask): Promise<{ success: boolean; message?: string; data?: any }> {
-    const { channel, channelConfig, content, userId } = task;
+    const { channel, userId, scheduleConfig } = task;
     const user = await this.userService.findOne(userId);
     if (!user) {
       throw new HttpException(`用户不存在: ${userId}`, HttpStatus.NOT_FOUND);
@@ -75,14 +75,14 @@ export class NotificationService {
    * 发送飞书通知
    */
   private async sendFeishuNotification(task: NotificationTask, user: any) {
-    const { channelConfig, content } = task;
-    const data: FeishuRunData = {
+    const { channelConfig, content, scheduleConfig } = task;
+    const data: FeishuNotificationData = {
       appId: channelConfig.appId,
       appSecret: channelConfig.appSecret,
       userId: channelConfig.userId,
       content: content,
     };
-    return await feishuRun(data);
+    return await sendFeishuNotification(data);
   }
 
   /**
@@ -94,7 +94,7 @@ export class NotificationService {
     if (!user.openid) {
       throw new HttpException(`用户未绑定微信openid: ${user.id}`, HttpStatus.BAD_REQUEST);
     }
-    const data: WechatMiniRunData = {
+    const data: WechatMiniNotificationData = {
       appId: wechatConfig.appId,
       appSecret: wechatConfig.appSecret,
       openid: user.openid,
@@ -102,7 +102,7 @@ export class NotificationService {
       page: channelConfig.page,
       data: channelConfig.data || content,
     };
-    return await wechatMiniRun(data);
+    return await sendWechatMiniNotification(data);
   }
 
   /**
@@ -114,7 +114,7 @@ export class NotificationService {
     if (!user.openid) {
       throw new HttpException(`用户未绑定微信openid: ${user.id}`, HttpStatus.BAD_REQUEST);
     }
-    const data: WechatMpRunData = {
+    const data: WechatMpNotificationData = {
       appId: wechatConfig.appId,
       appSecret: wechatConfig.appSecret,
       openid: user.openid,
@@ -122,7 +122,7 @@ export class NotificationService {
       url: channelConfig.url,
       data: channelConfig.data || content,
     };
-    return await wechatMpRun(data);
+    return await sendWechatMpNotification(data);
   }
 
   /**
@@ -137,13 +137,13 @@ export class NotificationService {
       userEmail: user.email || '',
       ...task.content,
     };
-    const data: UrlRunData = {
+    const data: UrlNotificationData = {
       url: channelConfig.url,
       method: channelConfig.method || 'POST',
       headers: channelConfig.headers,
       body: channelConfig.body,
     };
-    return await urlRun(data, variables);
+    return await sendUrlNotification(data, variables);
   }
 }
 

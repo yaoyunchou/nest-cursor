@@ -1,5 +1,80 @@
 # 变更日志
 
+## 2025-01-23（晚上 - 优化 @nestjs/schedule 配置）
+
+### 优化定时任务模块配置
+
+1. **将 ScheduleModule 移到应用根模块**
+   - 文件：`src/app.module.ts`
+   - 变更：在 `AppModule` 中导入 `ScheduleModule.forRoot()`
+   - 原因：`ScheduleModule.forRoot()` 应该在应用根模块中导入一次，而不是在子模块中重复导入
+   - 好处：
+     - 避免重复初始化
+     - 统一管理所有定时任务
+     - 符合 NestJS 最佳实践
+
+2. **从子模块中移除 ScheduleModule**
+   - 文件：`src/modules/notification-task/notification-task.module.ts`
+   - 变更：移除 `ScheduleModule.forRoot()` 的导入和使用
+   - 原因：已在根模块中统一管理
+
+3. **添加调度服务启动日志**
+   - 文件：`src/modules/notification-task/services/notification-scheduler.service.ts`
+   - 变更：
+     - 实现 `OnModuleInit` 接口
+     - 在 `onModuleInit()` 方法中记录启动日志
+   - 效果：应用启动时可以确认定时任务服务已正确启动
+
+4. **技术实现细节**
+   - 使用 `OnModuleInit` 生命周期钩子确保服务初始化完成
+   - 启动日志帮助监控和调试定时任务
+   - 保持代码结构清晰，符合单一职责原则
+
+5. **影响范围**
+   - 定时任务功能不受影响，仍然每分钟检查一次待执行的任务
+   - 代码结构更加规范，便于维护和扩展
+   - 启动日志便于确认服务状态
+
+## 2025-01-23（晚上 - Jest环境变量配置）
+
+### 配置Jest测试环境支持读取.env文件
+
+1. **创建Jest设置文件**
+   - 文件：`jest.setup.ts`
+   - 功能：在测试运行前自动加载 `.env.local` 和 `.env` 文件中的环境变量
+   - 实现：使用Node.js内置的`fs`和`path`模块解析.env文件
+   - 特性：
+     - 支持注释行（以#开头）
+     - 支持带引号的值（自动移除引号）
+     - 按优先级加载（.env.local 优先于 .env）
+     - 不覆盖已存在的环境变量
+
+2. **更新Jest配置**
+   - 文件：`package.json`
+   - 变更：在Jest配置中添加`setupFilesAfterEnv`选项
+   - 配置：`"setupFilesAfterEnv": ["../jest.setup.ts"]`
+   - 作用：确保在运行测试前先加载环境变量
+
+3. **优化测试文件环境变量处理**
+   - 文件：`src/modules/notification-task/notifiers/feishu.notifier.spec.ts`
+   - 变更：
+     - 在`beforeEach`中保存原始环境变量（可能来自.env文件）
+     - 设置测试专用的环境变量值（确保测试结果可预测）
+     - 在`afterEach`中恢复原始环境变量（包括从.env文件加载的值）
+   - 效果：测试既可以使用.env文件中的真实配置，也可以使用测试默认值
+
+4. **技术实现细节**
+   - 使用`process.cwd()`获取项目根目录
+   - 解析.env文件格式：`KEY=VALUE`
+   - 支持单引号和双引号包裹的值
+   - 忽略空行和注释行
+   - 文件不存在时静默处理（不影响测试运行）
+
+5. **影响范围**
+   - 所有Jest单元测试现在都可以读取.env文件中的环境变量
+   - 测试文件可以优先使用.env文件中的配置，如果没有则使用测试默认值
+   - 提高了测试的灵活性和可配置性
+
 ## 2025-01-23（晚上 - 测试修复）
 
 ### 修复单元测试中的多个问题

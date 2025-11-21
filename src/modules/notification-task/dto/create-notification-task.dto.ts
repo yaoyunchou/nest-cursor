@@ -24,11 +24,11 @@ import { NotificationChannel, ScheduleType } from '../entities/notification-task
 export class FeishuChannelConfig {
   @ApiProperty({ description: '飞书应用ID' })
   @IsString()
-  appId: string;
+  appId?: string;
 
   @ApiProperty({ description: '飞书应用密钥' })
   @IsString()
-  appSecret: string;
+  appSecret?: string;
 
   @ApiProperty({ description: '飞书用户ID（open_id）' })
   @IsString()
@@ -41,7 +41,7 @@ export class FeishuChannelConfig {
 export class WechatMiniChannelConfig {
   @ApiProperty({ description: '小程序账号ID（UUID）' })
   @IsString()
-  accountId: string;
+  accountId?: string;
 
   @ApiProperty({ description: '模板ID' })
   @IsString()

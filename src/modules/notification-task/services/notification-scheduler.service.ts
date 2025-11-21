@@ -3,7 +3,7 @@
  * @Date: 2025-01-23
  * @Description: 通知调度服务
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
@@ -16,7 +16,7 @@ import { NotificationTaskService } from '../notification-task.service';
  * 通知调度服务
  */
 @Injectable()
-export class NotificationSchedulerService {
+export class NotificationSchedulerService implements OnModuleInit {
   private readonly logger = new Logger(NotificationSchedulerService.name);
 
   constructor(
@@ -29,9 +29,16 @@ export class NotificationSchedulerService {
   ) {}
 
   /**
-   * 每分钟执行一次，检查需要执行的任务
+   * 模块初始化时记录启动日志
    */
-  @Cron('* * * * *')
+  onModuleInit() {
+    this.logger.log('通知任务调度服务已启动，定时任务每分钟检查一次待执行的任务');
+  }
+
+  /**
+   * 每30分钟执行一次，检查需要执行的任务
+   */
+  @Cron('*/30 * * * *')  // 每30分钟执行一次
   async checkAndExecuteTasks() {
     try {
       const now = new Date();

@@ -6,9 +6,9 @@ import axios from 'axios';
 /**
  * 飞书通知参数接口
  */
-export interface FeishuRunData {
-  appId: string;
-  appSecret: string;
+export interface FeishuNotificationData {
+  appId?: string;
+  appSecret?: string;
   userId: string;
   content: {
     title?: string;
@@ -20,7 +20,7 @@ export interface FeishuRunData {
 /**
  * 飞书通知返回结果接口
  */
-export interface FeishuRunResult {
+export interface FeishuNotificationResult {
   success: boolean;
   message?: string;
   data?: any;
@@ -32,39 +32,46 @@ export interface FeishuRunResult {
  * @param appSecret 应用密钥
  * @returns access_token
  */
-async function getFeishuAccessToken(appId: string, appSecret: string): Promise<string> {
+export async function getFeishuAccessToken(appId: string, appSecret: string): Promise<string> {
   const url = 'https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal';
   const response = await axios.post(url, {
     app_id: appId,
     app_secret: appSecret,
   });
-  if (response.data.code !== 0) {
+  if (response.data?.code !== 0) {
     throw new Error(`获取飞书access_token失败: ${response.data.msg}`);
   }
   return response.data.tenant_access_token;
 }
 
 /**
- * 飞书通知方法
+ * 发送飞书通知
  * @param data 通知数据
  * @returns 执行结果
  */
-export async function feishuRun(data: FeishuRunData): Promise<FeishuRunResult> {
+export async function sendFeishuNotification(data: FeishuNotificationData): Promise<FeishuNotificationResult> {
   try {
-    const { appId, appSecret, userId, content } = data;
+    // 优先使用传入的参数，如果没有则从环境变量获取
+    const appId = data.appId || process.env.FEISHU_APP_ID;
+    const appSecret = data.appSecret || process.env.FEISHU_APP_SECRET;
+    if (!appId || !appSecret) {
+      throw new Error('飞书应用ID和密钥未配置');
+    }
+    const { userId, content } = data;
     const accessToken = await getFeishuAccessToken(appId, appSecret);
-    const url = 'https://open.feishu.cn/open-apis/im/v1/messages';
     const messageContent: any = {
       text: content.text || content.title || '',
     };
     if (content.title) {
       messageContent.text = `${content.title}\n${content.text || ''}`;
     }
+    const receiveIdType = userId.startsWith('ou_') ? 'open_id' : 'user_id';
+    const url = `https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=${receiveIdType}`;
+
     const response = await axios.post(
       url,
       {
         receive_id: userId,
-        receive_id_type: 'open_id',
         msg_type: 'text',
         content: JSON.stringify(messageContent),
       },

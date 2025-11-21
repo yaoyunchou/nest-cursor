@@ -6,7 +6,7 @@ import axios from 'axios';
 /**
  * 微信公众号通知参数接口
  */
-export interface WechatMpRunData {
+export interface WechatMpNotificationData {
   appId: string;
   appSecret: string;
   openid: string;
@@ -18,7 +18,7 @@ export interface WechatMpRunData {
 /**
  * 微信公众号通知返回结果接口
  */
-export interface WechatMpRunResult {
+export interface WechatMpNotificationResult {
   success: boolean;
   message?: string;
   data?: any;
@@ -64,11 +64,11 @@ async function getWechatAccessToken(appId: string, appSecret: string): Promise<s
 }
 
 /**
- * 微信公众号模板消息通知方法
+ * 发送微信公众号模板消息通知
  * @param data 通知数据
  * @returns 执行结果
  */
-export async function wechatMpRun(data: WechatMpRunData): Promise<WechatMpRunResult> {
+export async function sendWechatMpNotification(data: WechatMpNotificationData): Promise<WechatMpNotificationResult> {
   try {
     const { appId, appSecret, openid, templateId, url: redirectUrl, data: templateData } = data;
     const accessToken = await getWechatAccessToken(appId, appSecret);

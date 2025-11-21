@@ -19,31 +19,31 @@ import { User } from '../../user/entities/user.entity';
  * 通知渠道枚举
  */
 export enum NotificationChannel {
-  FEISHU = 'FEISHU',
-  WECHAT_MINI = 'WECHAT_MINI',
-  WECHAT_MP = 'WECHAT_MP',
-  URL = 'URL',
+  FEISHU = 'FEISHU', // 飞书
+  WECHAT_MINI = 'WECHAT_MINI', // 微信小程序
+  WECHAT_MP = 'WECHAT_MP', // 微信公众号
+  URL = 'URL', // URL通知
 }
 
 /**
  * 调度类型枚举
  */
 export enum ScheduleType {
-  ONCE = 'ONCE',
-  INTERVAL = 'INTERVAL',
-  DAILY = 'DAILY',
-  WEEKLY = 'WEEKLY',
-  MONTHLY = 'MONTHLY',
+  ONCE = 'ONCE', // 一次性调度
+  INTERVAL = 'INTERVAL', // 间隔调度
+  DAILY = 'DAILY', // 每日调度
+  WEEKLY = 'WEEKLY', // 每周调度
+  MONTHLY = 'MONTHLY', // 每月调度
 }
 
 /**
  * 任务状态枚举
  */
 export enum TaskStatus {
-  ACTIVE = 'ACTIVE',
-  PAUSED = 'PAUSED',
-  COMPLETED = 'COMPLETED',
-  FAILED = 'FAILED',
+  ACTIVE = 'ACTIVE', // 活跃
+  PAUSED = 'PAUSED', // 暂停  
+  COMPLETED = 'COMPLETED', // 完成
+  FAILED = 'FAILED', // 失败
 }
 
 /**
@@ -129,4 +129,5 @@ export class NotificationTask {
   @ApiProperty({ description: '更新时间' })
   @UpdateDateColumn()
   updatedAt: Date;
+
 }
