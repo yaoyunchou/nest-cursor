@@ -6,7 +6,7 @@
  * @FilePath: \nest-cursor\src\modules\esp32\esp32.service.ts
  * @Description: ESP32芯片服务
  */
-import { Injectable, NotFoundException, Logger, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Esp32 } from './entities/esp32.entity';
@@ -14,10 +14,11 @@ import { CreateEsp32Dto } from './dto/create-esp32.dto';
 import { UpdateEsp32Dto } from './dto/update-esp32.dto';
 import { randomUUID } from 'crypto';
 import { SystemLogService } from '../system-log/system-log.service';
-import { LogModule } from '../system-log/entities/system-log.entity';
+import { NotificationTask, TaskStatus } from '../notification-task/entities/notification-task.entity';
+import { NotificationTaskService } from '../notification-task/notification-task.service';
 
 @Injectable()
-export class Esp32Service implements  OnModuleDestroy {
+export class Esp32Service implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(Esp32Service.name);
   /**
    * 记录每个bindingId的最后请求时间
@@ -40,14 +41,82 @@ export class Esp32Service implements  OnModuleDestroy {
   constructor(
     @InjectRepository(Esp32)
     private readonly esp32Repository: Repository<Esp32>,
+    @InjectRepository(NotificationTask)
+    private readonly notificationTaskRepository: Repository<NotificationTask>,
     private readonly systemLogService: SystemLogService,
+    private readonly notificationTaskService: NotificationTaskService,
   ) {}
+
+  onModuleInit() {
+    this.startHealthCheckTimer();
+    this.logger.log(`ESP32设备健康检查定时器已启动，检查间隔：${this.checkInterval}ms，超时时间：${this.timeoutDuration}ms`);
+  }
 
   onModuleDestroy() {
     if (this.checkTimer) {
       clearInterval(this.checkTimer);
       this.checkTimer = null;
       this.logger.log('ESP32健康检查定时器已停止');
+    }
+  }
+
+  /**
+   * 启动健康检查定时器
+   */
+  private startHealthCheckTimer(): void {
+    this.checkTimer = setInterval(() => {
+      this.checkTimeoutDevices().catch((error) => {
+        this.logger.error(`检查超时设备失败: ${error.message}`, error.stack);
+      });
+    }, this.checkInterval);
+  }
+
+  /**
+   * 检查超时的设备并更新关联任务状态
+   */
+  private async checkTimeoutDevices(): Promise<void> {
+    const now = Date.now();
+    const timeoutBindingIds: string[] = [];
+    for (const [bindingId, lastRequestTime] of this.bindingIdLastRequestTime.entries()) {
+      const timeSinceLastRequest = now - lastRequestTime;
+      if (timeSinceLastRequest > this.timeoutDuration) {
+        timeoutBindingIds.push(bindingId);
+      }
+    }
+    if (timeoutBindingIds.length === 0) {
+      return;
+    }
+    this.logger.log(`发现 ${timeoutBindingIds.length} 个超时设备，开始更新关联任务状态`);
+    for (const bindingId of timeoutBindingIds) {
+      try {
+        const esp32 = await this.esp32Repository.findOne({
+          where: { bindingId },
+        });
+        if (!esp32 || !esp32.taskId) {
+          this.bindingIdLastRequestTime.delete(bindingId);
+          continue;
+        }
+        const task = await this.notificationTaskRepository.findOne({
+          where: { id: esp32.taskId },
+        });
+        if (!task) {
+          this.logger.warn(`任务ID ${esp32.taskId} 不存在，跳过更新`);
+          this.bindingIdLastRequestTime.delete(bindingId);
+          continue;
+        }
+        if (task.status !== TaskStatus.ACTIVE) {
+          task.status = TaskStatus.ACTIVE;
+          task.nextExecuteAt = this.notificationTaskService.calculateNextExecuteAt(
+            task.scheduleType,
+            task.scheduleConfig,
+          );
+          await this.notificationTaskRepository.save(task);
+          this.logger.log(`已将任务ID ${esp32.taskId}（绑定ID: ${bindingId}）状态更新为 ACTIVE，下次执行时间：${task.nextExecuteAt?.toISOString() || '无'}`);
+        }
+        this.bindingIdLastRequestTime.delete(bindingId);
+      } catch (error) {
+        this.logger.error(`处理超时设备 ${bindingId} 失败: ${error.message}`, error.stack);
+      }
     }
   }
 
@@ -106,10 +175,21 @@ export class Esp32Service implements  OnModuleDestroy {
   }> {
     const esp32 = await this.findByBindingId(bindingId);
     const now = Date.now();
-    // 更新该bindingId的最后请求时间（如果之前被移除，这里会重新开始记录）
     this.bindingIdLastRequestTime.set(bindingId, now);
-    // 创建一个bind 
-
+    if (esp32.taskId) {
+      try {
+        const task = await this.notificationTaskRepository.findOne({
+          where: { id: esp32.taskId },
+        });
+        if (task && task.status !== TaskStatus.PAUSED) {
+          task.status = TaskStatus.PAUSED;
+          await this.notificationTaskRepository.save(task);
+          this.logger.log(`已将任务ID ${esp32.taskId}（绑定ID: ${bindingId}）状态更新为 PAUSED`);
+        }
+      } catch (error) {
+        this.logger.error(`更新任务状态失败: ${error.message}`, error.stack);
+      }
+    }
     return {
       status: 'ok',
       bindingId: esp32.bindingId,

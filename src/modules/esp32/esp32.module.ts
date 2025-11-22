@@ -12,11 +12,14 @@ import { Esp32 } from './entities/esp32.entity';
 import { Esp32Service } from './esp32.service';
 import { Esp32Controller } from './esp32.controller';
 import { SystemLogModule } from '../system-log/system-log.module';
+import { NotificationTask } from '../notification-task/entities/notification-task.entity';
+import { NotificationTaskModule } from '../notification-task/notification-task.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Esp32]),
+    TypeOrmModule.forFeature([Esp32, NotificationTask]),
     SystemLogModule,
+    NotificationTaskModule,
   ],
   controllers: [Esp32Controller],
   providers: [Esp32Service],
