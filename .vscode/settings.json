@@ -7,5 +7,7 @@
         "Lowcode",
         "QINIU",
         "wechat"
-    ]
+    ],
+    "jest.autoRun": "off",
+    "jest.runMode": "on-demand"
 }

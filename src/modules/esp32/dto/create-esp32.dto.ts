@@ -7,7 +7,7 @@
  * @Description: 创建ESP32芯片DTO
  */
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsNumber } from 'class-validator';
 
 export class CreateEsp32Dto {
   @ApiProperty({ description: '芯片型号', required: false })
@@ -24,6 +24,11 @@ export class CreateEsp32Dto {
   @IsString()
   @IsOptional()
   function?: string;
+
+  @ApiProperty({ description: '任务ID', required: false })
+  @IsNumber()
+  @IsOptional()
+  taskId?: number;
 
   @ApiProperty({ description: '订单来源', required: false })
   @IsString()

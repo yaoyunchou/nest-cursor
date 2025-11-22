@@ -38,7 +38,7 @@ export class NotificationSchedulerService implements OnModuleInit {
   /**
    * 每30分钟执行一次，检查需要执行的任务
    */
-  @Cron('*/30 * * * *')  // 每30分钟执行一次
+  @Cron('* * * * *')  // 每30分钟执行一次
   async checkAndExecuteTasks() {
     try {
       const now = new Date();

@@ -75,7 +75,7 @@ export class NotificationService {
    * 发送飞书通知
    */
   private async sendFeishuNotification(task: NotificationTask, user: any) {
-    const { channelConfig, content, scheduleConfig } = task;
+    const { channelConfig, content } = task;
     const data: FeishuNotificationData = {
       appId: channelConfig.appId,
       appSecret: channelConfig.appSecret,

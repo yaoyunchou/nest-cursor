@@ -97,7 +97,7 @@ export class NotificationTask {
   @Column({
     type: 'enum',
     enum: TaskStatus,
-    default: TaskStatus.ACTIVE,
+    default: TaskStatus.PAUSED,
   })
   status: TaskStatus;
 

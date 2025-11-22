@@ -45,6 +45,10 @@ export class Esp32 {
   @Column({ nullable: true })
   orderId: string;
 
+  @ApiProperty({ description: '任务ID' })
+  @Column({ nullable: true })
+  taskId: number;
+
   @ApiProperty({ description: '创建时间' })
   @CreateDateColumn()
   createdAt: Date;
