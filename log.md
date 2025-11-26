@@ -1,5 +1,84 @@
 # 变更日志
 
+## 2025-01-23（晚上 - 新增读书打卡模块）
+
+### 读书打卡功能模块开发完成
+
+1. **模块概述**
+   - 实现了完整的读书打卡功能模块
+   - 支持读书任务的创建、查询、更新、删除
+   - 支持打卡记录的创建、查询、更新、删除
+   - 实现了任务状态自动计算、打卡次数统计等业务逻辑
+
+2. **核心功能特点**
+   - **任务管理**：支持创建读书任务，设置开始和结束日期，自动计算任务状态和总打卡次数
+   - **打卡记录**：支持创建打卡记录，记录打卡日期、录音文件URL和时长
+   - **状态计算**：任务状态根据当前日期自动计算（pending/in_progress/completed）
+   - **次数统计**：自动计算总打卡次数和已完成打卡次数
+   - **唯一性校验**：同一任务同一天只能有一条打卡记录
+   - **日期验证**：打卡日期必须在任务日期范围内
+
+3. **技术实现亮点**
+   - 使用TypeORM实现数据持久化
+   - 实现了任务和打卡记录的一对多关联
+   - 使用数据库唯一索引确保打卡记录唯一性
+   - 实现了自动更新任务已完成打卡次数的逻辑
+   - 支持按任务、年份、月份筛选打卡记录
+   - 完整的JWT认证和权限控制
+
+4. **数据模型设计**
+   - **ReadingTask实体**：读书任务表，包含任务名称、开始日期、结束日期、状态、总打卡次数、已完成打卡次数等字段
+   - **ReadingCheckin实体**：打卡记录表，包含任务ID、用户ID、打卡日期、录音文件URL、录音时长等字段
+   - 建立了任务和打卡记录的一对多关系
+   - 建立了任务和用户的多对一关系
+   - 建立了打卡记录和用户的多对一关系
+
+5. **API接口设计**
+   - **读书任务接口**：
+     - `POST /reading/tasks`：创建读书任务
+     - `GET /reading/tasks`：获取任务列表（支持分页和状态筛选）
+     - `GET /reading/tasks/:id`：获取任务详情
+     - `PUT /reading/tasks/:id`：更新任务
+     - `DELETE /reading/tasks/:id`：删除任务
+   - **打卡记录接口**：
+     - `POST /reading/checkins`：创建打卡记录
+     - `GET /reading/checkins`：获取打卡记录列表（支持按任务、年份、月份筛选和分页）
+     - `GET /reading/checkins/:id`：获取打卡记录详情
+     - `PUT /reading/checkins/:id`：更新打卡记录
+     - `DELETE /reading/checkins/:id`：删除打卡记录
+
+6. **业务逻辑实现**
+   - **任务状态计算**：根据当前日期和任务的开始/结束日期自动计算状态
+     - `pending`：当前日期 < 开始日期
+     - `in_progress`：开始日期 <= 当前日期 <= 结束日期
+     - `completed`：当前日期 > 结束日期
+   - **总打卡次数计算**：根据任务的开始日期和结束日期计算总天数
+   - **已完成打卡次数**：统计该任务下已创建的打卡记录数量
+   - **打卡记录唯一性**：使用数据库唯一索引确保同一任务同一天只有一条记录
+   - **数据一致性**：创建/删除打卡记录时自动更新任务的已完成打卡次数
+
+7. **文件结构**
+   - `src/modules/reading/entities/`：实体定义
+     - `reading-task.entity.ts`：读书任务实体
+     - `reading-checkin.entity.ts`：打卡记录实体
+   - `src/modules/reading/dto/`：数据传输对象
+     - `create-reading-task.dto.ts`：创建任务DTO
+     - `update-reading-task.dto.ts`：更新任务DTO
+     - `query-reading-task.dto.ts`：查询任务DTO
+     - `create-reading-checkin.dto.ts`：创建打卡记录DTO
+     - `update-reading-checkin.dto.ts`：更新打卡记录DTO
+     - `query-reading-checkin.dto.ts`：查询打卡记录DTO
+   - `src/modules/reading/`：服务层和控制器
+     - `reading-task.service.ts`：任务服务
+     - `reading-checkin.service.ts`：打卡记录服务
+     - `reading-task.controller.ts`：任务控制器
+     - `reading-checkin.controller.ts`：打卡记录控制器
+     - `reading.module.ts`：模块定义
+
+8. **在AppModule中注册模块**
+   - 文件：`src/app.module.ts`
+   - 添加了`ReadingModule`到imports数组
+
 ## 2025-01-23（晚上 - 禁用 Jest 自动运行）
 
 ### 禁用 VS Code Jest 扩展的自动运行功能

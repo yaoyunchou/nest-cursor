@@ -27,6 +27,7 @@ import { DictionaryModule } from './modules/dictionary/dictionary.module';
 import { AiModule } from './modules/ai/ai.module';
 import { Esp32Module } from './modules/esp32/esp32.module';
 import { NotificationTaskModule } from './modules/notification-task/notification-task.module';
+import { ReadingModule } from './modules/reading/reading.module';
 
 @Module({
   imports: [
@@ -69,6 +70,7 @@ import { NotificationTaskModule } from './modules/notification-task/notification
     DictionaryModule,
     AiModule,
     NotificationTaskModule,
+    ReadingModule,
   ],
   controllers: [HealthController],
 })
