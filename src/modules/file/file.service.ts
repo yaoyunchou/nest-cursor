@@ -6,7 +6,7 @@
  * @FilePath: \nest-cursor\src\modules\file\file.service.ts
  * @Description: 文件服务
  */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { File } from './entities/file.entity';
@@ -129,5 +129,170 @@ export class FileService {
    */
   getUploadToken(): string {
     return this.qiniuService.getUploadToken();
+  }
+
+  /**
+   * 上传并合并音频文件（支持1到多个文件）
+   * @param files - 音频文件对象数组（1-21个）
+   * @param userId - 上传用户ID
+   * @returns 上传或合并后的文件实体
+   */
+  async uploadAndMergeAudio(
+    files: Express.Multer.File[],
+    userId: number,
+  ): Promise<File> {
+    // 验证文件数量
+    if (!files || files.length === 0) {
+      throw new BadRequestException('至少需要上传1个音频文件');
+    }
+    if (files.length > 21) {
+      throw new BadRequestException('最多只能上传21个音频文件');
+    }
+    // 验证文件类型
+    const audioMimeTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/m4a', 'audio/aac'];
+    for (const file of files) {
+      if (!audioMimeTypes.includes(file.mimetype)) {
+        throw new BadRequestException(`文件 ${file.originalname} 不是支持的音频格式`);
+      }
+    }
+    // 如果只有1个文件，直接上传返回，不进行合并
+    if (files.length === 1) {
+      return await this.upload(files[0], userId);
+    }
+    // 上传多个文件到七牛云
+    const uploadedFiles: File[] = [];
+    for (const file of files) {
+      const uploadedFile = await this.upload(file, userId);
+      uploadedFiles.push(uploadedFile);
+    }
+    // 生成合并后的文件名
+    const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const outputKey = `coze/merged/${Date.now()}-${random}.mp3`;
+    // 获取源文件的key数组
+    const sourceKeys = uploadedFiles.map((f) => f.key);
+    // 调用七牛云合并接口
+    const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, 'mp3');
+    // 轮询等待合并完成
+    let mergedUrl: string | null = null;
+    const maxRetries = 30; // 最多重试30次
+    const retryInterval = 2000; // 每次间隔2秒
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const status = await this.qiniuService.getPersistentStatus(persistentId);
+        if (status.code === 0) {
+          // 合并成功
+          mergedUrl = this.qiniuService.getFileUrl(outputKey);
+          break;
+        } else if (status.code === 1) {
+          // 处理中，等待后继续
+          if (i < maxRetries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, retryInterval));
+          }
+          continue;
+        } else {
+          // 处理失败
+          throw new Error(`音频合并失败: ${status.description || '未知错误'}`);
+        }
+      } catch (error) {
+        if (i === maxRetries - 1) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          throw new BadRequestException(`音频合并超时或失败: ${errorMessage}`);
+        }
+        // 等待后重试
+        await new Promise((resolve) => setTimeout(resolve, retryInterval));
+      }
+    }
+    if (!mergedUrl) {
+      throw new BadRequestException('音频合并超时，请稍后重试');
+    }
+    // 计算合并后文件的总大小（估算）
+    const totalSize = uploadedFiles.reduce((sum, f) => sum + f.size, 0);
+    // 创建合并后的文件实体
+    const mergedFileEntity = this.fileRepository.create({
+      filename: `merged-${Date.now()}.mp3`,
+      originalname: `merged-audio-${Date.now()}.mp3`,
+      size: totalSize,
+      mimetype: 'audio/mpeg',
+      url: mergedUrl,
+      key: outputKey,
+      userId,
+    });
+    // 保存合并后的文件信息到数据库
+    return await this.fileRepository.save(mergedFileEntity);
+  }
+
+  /**
+   * 通过七牛云URL合并音频文件（支持2到21个文件）
+   * @param urls - 七牛云音频文件URL数组（2-21个）
+   * @param userId - 用户ID
+   * @returns 合并后的文件实体
+   */
+  async mergeAudioByUrls(urls: string[], userId: number): Promise<File> {
+    // 验证URL数量
+    if (!urls || urls.length < 2) {
+      throw new BadRequestException('至少需要2个音频文件URL');
+    }
+    if (urls.length > 21) {
+      throw new BadRequestException('最多只能合并21个音频文件');
+    }
+    // 从URL中提取key
+    const sourceKeys: string[] = [];
+    for (const url of urls) {
+      const key = this.qiniuService.extractKeyFromUrl(url);
+      if (!key) {
+        throw new BadRequestException(`无效的七牛云URL: ${url}，无法提取文件key`);
+      }
+      sourceKeys.push(key);
+    }
+    // 生成合并后的文件名
+    const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const outputKey = `coze/merged/${Date.now()}-${random}.mp3`;
+    // 调用七牛云合并接口
+    const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, 'mp3');
+    // 轮询等待合并完成
+    let mergedUrl: string | null = null;
+    const maxRetries = 30; // 最多重试30次
+    const retryInterval = 2000; // 每次间隔2秒
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const status = await this.qiniuService.getPersistentStatus(persistentId);
+        if (status.code === 0) {
+          // 合并成功
+          mergedUrl = this.qiniuService.getFileUrl(outputKey);
+          break;
+        } else if (status.code === 1) {
+          // 处理中，等待后继续
+          if (i < maxRetries - 1) {
+            await new Promise((resolve) => setTimeout(resolve, retryInterval));
+          }
+          continue;
+        } else {
+          // 处理失败
+          throw new Error(`音频合并失败: ${status.description || '未知错误'}`);
+        }
+      } catch (error) {
+        if (i === maxRetries - 1) {
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          throw new BadRequestException(`音频合并超时或失败: ${errorMessage}`);
+        }
+        // 等待后重试
+        await new Promise((resolve) => setTimeout(resolve, retryInterval));
+      }
+    }
+    if (!mergedUrl) {
+      throw new BadRequestException('音频合并超时，请稍后重试');
+    }
+    // 创建合并后的文件实体（大小设为0，因为无法准确计算）
+    const mergedFileEntity = this.fileRepository.create({
+      filename: `merged-${Date.now()}.mp3`,
+      originalname: `merged-audio-${Date.now()}.mp3`,
+      size: 0, // 无法准确计算合并后的大小
+      mimetype: 'audio/mpeg',
+      url: mergedUrl,
+      key: outputKey,
+      userId,
+    });
+    // 保存合并后的文件信息到数据库
+    return await this.fileRepository.save(mergedFileEntity);
   }
 } 

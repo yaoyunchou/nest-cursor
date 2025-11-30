@@ -1,10 +1,11 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Delete, Query,Request, Put } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { TargetService } from './target.service';
 import { CreateTargetDto } from './dto/create-target.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateTargetTaskDto } from './dto/create-target-task.dot';
 import { UpdateTargetTaskDto } from './dto/update-target-task.dot';
+import { Public } from '../auth/decorators/public.decorator';
 
 /**
  * 目标控制器
@@ -85,16 +86,120 @@ export class TargetController {
 
   /**
    *  用户目标汇总
-   * @param userId - 用户ID
-   * @returns 用户目标汇总
+   * 通用接口：如果用户已登录则返回目标汇总，如果未登录则返回 isAuth: false
+   * @param req - 请求对象，包含当前用户信息
+   * @returns 用户目标汇总或认证状态
    */
   @Get('/user/summary')
-  @ApiOperation({ summary: '用户目标汇总' })
-  summary(@Request() req) {
-    const userId = parseInt(req?.user?.userId, 10);
-    if (!userId) {
-      throw new Error('无效的用户ID');
+  @Public()
+  @ApiOperation({ summary: '用户目标汇总', description: '通用接口：如果用户已登录则返回目标汇总，如果未登录则返回 isAuth: false， 有用户信息则返回正常的用户目标汇总数据'})
+  @ApiResponse({
+    status: 200,
+    description: '未登录用户响应',
+    schema: {
+      type: 'object',
+      properties: {
+        isAuth: {
+          type: 'boolean',
+          example: false,
+          description: '认证状态，false表示未登录',
+        },
+      },
+      example: {
+        isAuth: false,
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: '已登录用户响应',
+    schema: {
+      type: 'object',
+      properties: {
+        isAuth: {
+          type: 'boolean',
+          example: true,
+          description: '认证状态，true表示已登录',
+        },
+        targets: {
+          type: 'array',
+          description: '目标列表',
+          items: {
+            type: 'object',
+          },
+        },
+        totalTargets: {
+          type: 'number',
+          example: 10,
+          description: '总目标数',
+        },
+        totalTasks: {
+          type: 'number',
+          example: 50,
+          description: '总任务数',
+        },
+        totalPlannedTime: {
+          type: 'number',
+          example: 100,
+          description: '总目标规划时间（小时）',
+        },
+        totalTaskCompletedTime: {
+          type: 'number',
+          example: 60,
+          description: '总任务完成时间（小时）',
+        },
+        totalTime: {
+          type: 'number',
+          example: 100,
+          description: '总时间（小时）',
+        },
+        totalTaskTime: {
+          type: 'number',
+          example: 60,
+          description: '总任务时间（小时）',
+        },
+        completedTargetsPercentage: {
+          type: 'number',
+          example: 50,
+          description: '完成目标百分比',
+        },
+        completionPercentage: {
+          type: 'number',
+          example: 60,
+          description: '完成任务百分比',
+        },
+        completedTargets: {
+          type: 'array',
+          description: '已完成的目标列表',
+          items: {
+            type: 'object',
+          },
+        },
+      },
+      example: {
+        isAuth: true,
+        targets: [],
+        totalTargets: 10,
+        totalTasks: 50,
+        totalPlannedTime: 100,
+        totalTaskCompletedTime: 60,
+        totalTime: 100,
+        totalTaskTime: 60,
+        completedTargetsPercentage: 50,
+        completionPercentage: 60,
+        completedTargets: [],
+      },
+    },
+  })
+  async summary(@Request() req) {
+    const userId = req?.user?.userId ? parseInt(req.user.userId, 10) : undefined;
+    if (!userId || isNaN(userId)) {
+      return { isAuth: false };
     }
-    return this.targetService.summary(userId);
+    const summaryData = await this.targetService.summary(userId);
+    return {
+      ...summaryData,
+      isAuth: true,
+    };
   }
 } 

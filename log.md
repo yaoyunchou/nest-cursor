@@ -1,5 +1,232 @@
 # 变更日志
 
+## 2025-01-23（晚上 - 还原音频合并相关DTO文件）
+
+### 还原被误删的DTO文件
+
+1. **问题描述**
+   - 用户不小心删除了两个DTO文件：
+     - `src/modules/file/dto/merge-audio-by-url.dto.ts`
+     - `src/modules/file/dto/upload-audio-merge.dto.ts`
+
+2. **还原内容**
+   - **MergeAudioByUrlDto** (`src/modules/file/dto/merge-audio-by-url.dto.ts`)：
+     - 用于通过七牛云URL合并音频文件的DTO
+     - 包含 `urls: string[]` 字段
+     - 验证规则：数组长度2-21，每个元素必须是有效的URL
+     - 使用 `@IsArray()`、`@ArrayMinSize(2)`、`@ArrayMaxSize(21)`、`@IsUrl({ each: true })` 进行验证
+   - **UploadAudioMergeDto** (`src/modules/file/dto/upload-audio-merge.dto.ts`)：
+     - 用于上传并合并音频文件的DTO
+     - 包含 `files: Express.Multer.File[]` 字段
+     - 支持1-21个音频文件上传
+
+3. **文件用途**
+   - `MergeAudioByUrlDto` 在 `file.controller.ts` 的 `mergeAudioByUrls` 接口中使用
+   - `UploadAudioMergeDto` 已导入但当前使用内联 schema，保留以保持代码一致性
+
+## 2025-01-23（晚上 - 读书打卡模块支持多段录音URL）
+
+### 为打卡记录添加 audioUrlList 字段支持
+
+1. **功能说明**
+   - 在创建和更新打卡记录时，支持传入多个录音文件URL
+   - 新增 `audioUrlList` 字段，用于接收多段原始录音数据
+   - 保持向后兼容，原有的 `audioUrl` 字段仍然可用
+
+2. **实现内容**
+   - **CreateReadingCheckinDto** (`src/modules/reading/dto/create-reading-checkin.dto.ts`)：
+     - 新增 `audioUrlList?: string[]` 字段
+     - 添加数组验证：至少包含一个URL，每个元素必须是有效的URL
+     - 使用 `@IsArray()`、`@ArrayMinSize()`、`@IsUrl({ each: true })` 进行验证
+   - **UpdateReadingCheckinDto** (`src/modules/reading/dto/update-reading-checkin.dto.ts`)：
+     - 同样添加 `audioUrlList?: string[]` 字段
+     - 保持与创建DTO的一致性
+   - **ReadingCheckinService** (`src/modules/reading/reading-checkin.service.ts`)：
+     - 在 `create()` 方法中：优先使用 `audioUrlList`，如果提供则序列化为JSON字符串存储到 `audioUrl` 字段
+     - 在 `update()` 方法中：同样优先处理 `audioUrlList`
+     - 保持向后兼容：如果没有 `audioUrlList`，则使用原有的 `audioUrl` 字段
+
+3. **技术实现细节**
+   - 使用 JSON 序列化将 URL 数组存储到数据库的 `audioUrl` 字段（字符串类型）
+   - 验证规则：数组至少包含1个元素，每个元素必须是有效的URL
+   - 优先级：`audioUrlList` > `audioUrl`（如果同时提供，优先使用 `audioUrlList`）
+
+4. **使用示例**
+   ```json
+   {
+     "taskId": 1,
+     "checkInDate": "2024-01-15",
+     "audioUrlList": [
+       "https://example.com/audio/xxx1.mp3",
+       "https://example.com/audio/xxx2.mp3"
+     ],
+     "duration": 120
+   }
+   ```
+
+5. **影响范围**
+   - 不影响现有功能，保持向后兼容
+   - 数据库结构无需修改（使用JSON字符串存储）
+   - API接口自动支持新字段，Swagger文档会自动更新
+
+## 2025-01-23（晚上 - 创建 plink.exe 自动下载脚本）
+
+### 创建 plink.exe 下载工具
+
+1. **问题描述**
+   - 用户只有 `putty.exe`，没有 `plink.exe` 文件
+   - `plink.exe` 是 PuTTY 的命令行工具，用于脚本自动化
+   - 需要手动下载 plink.exe 才能使用部署脚本
+
+2. **解决方案**
+   - 创建了 `download-plink.bat` 脚本
+   - 自动从 PuTTY 官网下载 plink.exe
+   - 下载到 `E:\runjian\` 目录（与 putty.exe 同目录）
+   - 使用 PowerShell 的 `Invoke-WebRequest` 下载文件
+
+3. **脚本功能**
+   - 自动检查目标目录是否存在，不存在则创建
+   - 检查 plink.exe 是否已存在，避免重复下载
+   - 提供下载进度和结果反馈
+   - 下载失败时提供手动下载指引
+
+4. **使用方法**
+   - 直接运行 `download-plink.bat` 即可自动下载
+   - 下载完成后，`upload.bat` 脚本会自动检测并使用
+
+5. **优化 upload.bat**
+   - 更新了错误提示信息
+   - 添加了运行 `download-plink.bat` 的提示
+   - 提供更友好的用户指引
+
+## 2025-01-23（晚上 - 优化 upload.bat 脚本支持指定路径的 plink.exe）
+
+### 优化部署脚本的 plink 工具检测逻辑
+
+1. **问题描述**
+   - 用户安装的 PuTTY 在 `E:\runjian\putty.exe`
+   - 原脚本只检查系统 PATH 中的 plink，无法使用指定路径的 plink.exe
+   - `plink.exe` 通常与 `putty.exe` 在同一目录下
+
+2. **修复内容**
+   - 文件：`upload.bat`
+   - 变更内容：
+     - 优先检查 `E:\runjian\plink.exe` 是否存在
+     - 如果存在，直接使用完整路径
+     - 如果不存在，再检查系统 PATH 中的 plink
+     - 使用 `PLINK_PATH` 变量存储 plink 的路径
+     - 在执行命令时使用 `"%PLINK_PATH%"` 确保路径正确
+
+3. **技术实现细节**
+   - 使用 `if exist` 检查指定路径的文件是否存在
+   - 使用 `where plink` 检查系统 PATH 中的 plink
+   - 使用引号包裹路径变量，避免路径中包含空格时出错
+   - 提供清晰的错误提示，指导用户如何解决问题
+
+4. **影响范围**
+   - 脚本现在可以自动检测并使用 `E:\runjian\plink.exe`
+   - 如果指定路径不存在，会自动回退到系统 PATH 中的 plink
+   - 提高了脚本的灵活性和兼容性
+
+## 2025-01-23（晚上 - 添加 plink.exe 到系统 PATH 配置脚本）
+
+### 创建 PATH 环境变量配置工具
+
+1. **功能说明**
+   - 创建了用于将 `plink.exe` 所在目录添加到系统 PATH 环境变量的工具脚本
+   - 支持通过批处理文件或 PowerShell 脚本两种方式配置
+   - 文件位置：`E:\runjian\plink.exe`
+
+2. **实现内容**
+   - **批处理脚本** (`add-plink-to-path.bat`)：
+     - 自动检查目录和文件是否存在
+     - 使用 PowerShell 以管理员权限添加 PATH
+     - 提供友好的中文提示信息
+   - **PowerShell 脚本** (`add-plink-to-path.ps1`)：
+     - 完整的 PATH 添加逻辑
+     - 检查是否已存在，避免重复添加
+     - 详细的错误处理和提示信息
+
+3. **使用方法**
+   - 方法一：右键以管理员身份运行 `add-plink-to-path.bat`
+   - 方法二：以管理员身份运行 PowerShell，执行 `add-plink-to-path.ps1`
+   - 方法三：通过系统环境变量设置界面手动添加
+
+4. **注意事项**
+   - 需要管理员权限才能修改系统 PATH
+   - 修改后需要重新打开命令行窗口才能生效
+   - 脚本会自动检查路径是否已存在，避免重复添加
+
+## 2025-01-23（晚上 - 新增通过URL合并音频文件功能）
+
+### 新增通过七牛云URL合并音频文件接口
+
+1. **功能说明**
+   - 新增接口：`POST /api/v1/file/audio/merge-by-url`
+   - 支持通过传入七牛云文件URL数组直接合并音频文件
+   - 无需重新上传文件，直接使用已存在的文件进行合并
+
+2. **实现内容**
+   - **QiniuService** (`src/modules/file/qiniu.service.ts`)：
+     - 新增 `extractKeyFromUrl()` 方法：从七牛云URL中提取文件key
+     - 支持多种七牛云URL格式，自动处理查询参数和hash
+   - **FileService** (`src/modules/file/file.service.ts`)：
+     - 新增 `mergeAudioByUrls()` 方法：通过URL数组合并音频文件
+     - 自动从URL中提取key，调用七牛云合并接口
+     - 轮询等待合并完成，最多等待60秒
+   - **FileController** (`src/modules/file/file.controller.ts`)：
+     - 新增 `mergeAudioByUrls()` 接口端点
+     - 使用 `MergeAudioByUrlDto` 进行参数验证
+   - **DTO** (`src/modules/file/dto/merge-audio-by-url.dto.ts`)：
+     - 创建 `MergeAudioByUrlDto` 类
+     - 验证URL数组格式和数量（2-21个）
+
+3. **技术实现细节**
+   - 七牛云 `avconcat` 接口要求所有源文件必须位于同一存储空间
+   - 从URL中提取key时，自动处理域名匹配和路径解析
+   - 支持带查询参数和hash的URL，自动清理后提取key
+   - 合并过程与文件上传方式相同，使用相同的轮询机制
+
+4. **使用限制**
+   - 文件数量：2-21个URL
+   - 所有文件必须位于同一七牛云存储空间
+   - URL必须是有效的七牛云文件URL
+   - 需要JWT认证
+
+5. **文档更新**
+   - 更新 `doc/audio-merge-api-examples.md`，添加URL合并方式的详细示例
+   - 包含cURL、JavaScript、Axios、Postman等多种使用方式
+
+## 2025-01-23（晚上 - 修复七牛云音频合并功能）
+
+### 修复七牛云 pfop 方法调用错误
+
+1. **问题描述**
+   - 错误信息：`Property 'pfop' does not exist on type 'BucketManager'`
+   - 原因：`pfop`（持久化处理）方法应该使用 `OperationManager` 而不是 `BucketManager`
+   - 位置：`src/modules/file/qiniu.service.ts` 第125行
+
+2. **修复内容**
+   - 将 `BucketManager` 改为 `OperationManager` 来执行 `pfop` 操作
+   - 修正 `pfop` 方法的参数结构：
+     - `pipeline` 作为单独参数传递
+     - `notifyURL` 和其他选项放在 `PfopOptions` 对象中传递
+   - 文件：`src/modules/file/qiniu.service.ts`
+   - 变更内容：
+     - 使用 `qiniu.fop.OperationManager` 替代 `qiniu.rs.BucketManager`
+     - 将 `notifyURL` 参数改为 `PfopOptions` 对象格式
+     - 保持其他业务逻辑不变
+
+3. **技术实现细节**
+   - `OperationManager` 是七牛云 SDK 中专门用于持久化处理操作的类
+   - `pfop` 方法签名：`pfop(bucket: string, key: string, fops: string[], pipeline: string, options: PfopOptions | null, callback)`
+   - `PfopOptions` 接口包含：`notifyURL`、`force`、`type`、`workflowTemplateID` 等可选字段
+
+4. **影响范围**
+   - 修复了音频合并功能的编译错误
+   - `concatAudio` 方法现在可以正常调用七牛云的音频合并服务
+   - 不影响其他文件上传、删除等功能
+
 ## 2025-01-23（晚上 - 新增读书打卡模块）
 
 ### 读书打卡功能模块开发完成

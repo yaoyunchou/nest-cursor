@@ -13,8 +13,10 @@ import {
   Delete,
   Param,
   Query,
+  Body,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles,
   ParseIntPipe,
   UseGuards,
   Request,
@@ -22,13 +24,15 @@ import {
   Response as ExpressResponse,
   Res
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { FileService } from './file.service';
 import { File } from './entities/file.entity';
 import { QueryFileDto } from './dto/query-file.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
+import { UploadAudioMergeDto } from './dto/upload-audio-merge.dto';
+import { MergeAudioByUrlDto } from './dto/merge-audio-by-url.dto';
 import { PaginatedResponse } from '../../shared/interfaces/pagination.interface';
 import { Public } from '../auth/decorators/public.decorator';
 import type { Response as ExpressResponseType } from 'express';
@@ -117,6 +121,40 @@ export class FileController {
     }
   }
 
+  @ApiOperation({ summary: '上传并合并音频文件（支持1到多个文件）' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ 
+    schema: {
+      type: 'object',
+      properties: {
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
+          description: '音频文件（1-21个，支持mp3、wav、m4a、aac格式）。单个文件直接上传返回，多个文件自动合并',
+        },
+      },
+      required: ['files'],
+    },
+  })
+  @Post('audio/merge')
+  @UseInterceptors(FilesInterceptor('files', 21)) // 最多接收21个文件（七牛云限制）
+  async uploadAndMergeAudio(
+    @UploadedFiles() files: Express.Multer.File[],
+    @Request() req,
+  ): Promise<File> {
+    return this.fileService.uploadAndMergeAudio(files, req.user.userId);
+  }
 
-
+  @ApiOperation({ summary: '通过七牛云URL合并音频文件（支持2到21个文件）' })
+  @ApiBody({ type: MergeAudioByUrlDto })
+  @Post('audio/merge-by-url')
+  async mergeAudioByUrls(
+    @Request() req,
+    @Body() dto: MergeAudioByUrlDto,
+  ): Promise<File> {
+    return this.fileService.mergeAudioByUrls(dto.urls, req.user.userId);
+  }
 } 

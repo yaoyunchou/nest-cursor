@@ -95,4 +95,112 @@ export class QiniuService {
   getFileUrl(key: string): string {
     return `${this.domain}/${key}`;
   }
+
+  /**
+   * 从七牛云URL中提取文件key
+   * @param url 七牛云文件URL
+   * @returns 文件key，如果不是七牛云URL则返回null
+   */
+  extractKeyFromUrl(url: string): string | null {
+    try {
+      const urlObj = new URL(url);
+      // 获取配置的域名（可能是完整URL或只是域名）
+      let domainHostname: string;
+      try {
+        const domainUrl = new URL(this.domain);
+        domainHostname = domainUrl.hostname;
+      } catch {
+        // 如果domain不是完整URL，直接使用
+        domainHostname = this.domain.replace(/^https?:\/\//, '').split('/')[0];
+      }
+      // 检查是否是当前配置的域名
+      if (urlObj.hostname === domainHostname) {
+        // 提取路径部分（去掉开头的/）
+        const key = urlObj.pathname.substring(1);
+        // 移除查询参数和hash
+        const cleanKey = key.split('?')[0].split('#')[0];
+        return cleanKey || null;
+      }
+      // 如果不是当前域名，尝试从路径中提取（兼容其他七牛云域名格式）
+      const pathMatch = urlObj.pathname.match(/^\/(.+)$/);
+      if (pathMatch && pathMatch[1]) {
+        // 移除查询参数和hash
+        const cleanKey = pathMatch[1].split('?')[0].split('#')[0];
+        return cleanKey || null;
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * 合并多个音频文件
+   * @param sourceKeys 源文件key数组（最多21个）
+   * @param outputKey 输出文件key
+   * @param format 输出格式，默认为mp3
+   * @returns 持久化处理ID
+   */
+  async concatAudio(
+    sourceKeys: string[],
+    outputKey: string,
+    format: string = 'mp3',
+  ): Promise<string> {
+    if (sourceKeys.length < 2 || sourceKeys.length > 21) {
+      throw new Error('音频文件数量必须在2-21个之间');
+    }
+    const config = new qiniu.conf.Config();
+    const operManager = new qiniu.fop.OperationManager(this.mac, config);
+    // 构建avconcat指令：avconcat/2/format/mp3|key1|key2|key3
+    const keysParam = sourceKeys.join('|');
+    // 构建saveas参数：base64编码的bucket:key
+    const saveas = qiniu.util.urlsafeBase64Encode(`${this.bucket}:${outputKey}`);
+    // 完整的fops指令，包含saveas
+    const fops = `avconcat/2/format/${format}|${keysParam}|saveas/${saveas}`;
+    const pipeline = ''; // 使用默认队列
+    const options: qiniu.fop.PfopOptions = {}; // 不设置回调URL和其他选项
+    return new Promise((resolve, reject) => {
+      operManager.pfop(
+        this.bucket,
+        sourceKeys[0], // 第一个源文件作为主文件
+        [fops],
+        pipeline,
+        options,
+        (err, respBody, respInfo) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          if (respInfo.statusCode === 200) {
+            resolve(respBody.persistentId);
+          } else {
+            reject(new Error(`合并失败: ${JSON.stringify(respBody)}`));
+          }
+        },
+      );
+    });
+  }
+
+  /**
+   * 查询持久化处理状态
+   * @param persistentId 持久化处理ID
+   * @returns 处理状态信息
+   */
+  async getPersistentStatus(persistentId: string): Promise<any> {
+    const config = new qiniu.conf.Config();
+    const operManager = new qiniu.fop.OperationManager(this.mac, config);
+    return new Promise((resolve, reject) => {
+      operManager.prefop(persistentId, (err, respBody, respInfo) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        if (respInfo.statusCode === 200) {
+          resolve(respBody);
+        } else {
+          reject(new Error(`查询状态失败: ${JSON.stringify(respBody)}`));
+        }
+      });
+    });
+  }
 } 

@@ -6,7 +6,7 @@
  * @FilePath: \nest-cursor\src\modules\auth\guards\jwt-auth.guard.ts
  * @Description: JWT认证守卫
  */
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
@@ -31,7 +31,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * 判断当前请求是否可以通过认证
    * 
    * @param context - 执行上下文，包含请求信息
-   * @returns 如果路由被标记为公开，直接返回true；否则执行JWT认证
+   * @returns 对于公开路由，仍然执行认证策略以解析用户信息，但认证失败不抛出异常；对于非公开路由，执行JWT认证
    */
   canActivate(context: ExecutionContext) {
     // 检查路由是否被@Public()装饰器标记为公开访问
@@ -40,13 +40,37 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       context.getClass(),   // 检查控制器级别的元数据
     ]);
 
-    // 如果路由被标记为公开，跳过JWT认证
+    // 对于公开路由，仍然执行认证策略以解析用户信息（如果提供了token）
+    // 但通过 handleRequest 方法处理认证失败的情况，不抛出异常
+    // 对于非公开路由，执行JWT认证，认证失败会抛出异常
+    return super.canActivate(context);
+  }
+
+  /**
+   * 处理请求，对于公开路由，即使token无效也不抛出异常
+   * 
+   * @param err - 错误对象
+   * @param user - 用户对象
+   * @param info - 额外信息
+   * @param context - 执行上下文
+   * @returns 用户对象或null
+   */
+  handleRequest(err: any, user: any, info: any, context: ExecutionContext) {
+    // 检查路由是否被@Public()装饰器标记为公开访问
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    // 如果是公开路由，即使认证失败也允许访问（user可能为undefined）
     if (isPublic) {
-      return true;
+      return user || null;
     }
 
-    // 否则执行父类的JWT认证逻辑
-    const result = super.canActivate(context);
-    return result;
+    // 对于非公开路由，使用父类的默认处理逻辑（会抛出异常）
+    if (err || !user) {
+      throw err || new UnauthorizedException('未授权');
+    }
+    return user;
   }
 } 
