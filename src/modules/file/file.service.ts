@@ -276,9 +276,9 @@ export class FileService {
     }
     // 生成合并后的文件名
     const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const outputKey = `coze/merged/${Date.now()}-${random}.mp3`;
+    const outputKey = `coze/merged/${Date.now()}-${random}.mpeg`;
     // 调用七牛云合并接口
-    const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, 'mp3');
+    const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, 'mpeg');
     // 轮询等待合并完成
     let mergedUrl: string | null = null;
     const maxRetries = 30; // 最多重试30次

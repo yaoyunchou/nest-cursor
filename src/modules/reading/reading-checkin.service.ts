@@ -47,20 +47,20 @@ export class ReadingCheckinService {
     if (checkInDate < taskStartDate || checkInDate > taskEndDate) {
       throw new BadRequestException('打卡日期不在任务日期范围内');
     }
-    let finalAudioUrl = createReadingCheckinDto.audioUrl;
-    if (createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 0) {
-      if (createReadingCheckinDto.audioUrlList.length === 1) {
-        finalAudioUrl = createReadingCheckinDto.audioUrlList[0];
-      } else {
-        const mergedFile = await this.fileService.mergeAudioByUrls(createReadingCheckinDto.audioUrlList, userId);
-        finalAudioUrl = mergedFile.url;
-      }
-    }
+    // let finalAudioUrl = createReadingCheckinDto.audioUrl;
+    // if (createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 0) {
+    //   if (createReadingCheckinDto.audioUrlList.length === 1) {
+    //     finalAudioUrl = createReadingCheckinDto.audioUrlList[0];
+    //   } else {
+    //     const mergedFile = await this.fileService.mergeAudioByUrls(createReadingCheckinDto.audioUrlList, userId);
+    //     finalAudioUrl = mergedFile.url;
+    //   }
+    // }
     const checkin = this.readingCheckinRepository.create({
       task: { id: taskId } as any,
       user: { id: userId } as any,
       checkInDate,
-      audioUrl: finalAudioUrl,
+      audioUrl: createReadingCheckinDto.audioUrl,
       audioUrlList: createReadingCheckinDto.audioUrlList,
       duration: createReadingCheckinDto.duration,
     });

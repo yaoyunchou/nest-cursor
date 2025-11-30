@@ -151,8 +151,11 @@ export class QiniuService {
     }
     const config = new qiniu.conf.Config();
     const operManager = new qiniu.fop.OperationManager(this.mac, config);
-    // 构建avconcat指令：avconcat/2/format/mp3|key1|key2|key3
-    const keysParam = sourceKeys.join('|');
+    // 构建avconcat指令：对key进行URL编码，避免特殊字符被误识别
+    // 根据七牛云文档，avconcat指令格式：avconcat/2/format/mp3|key1|key2|key3
+    // 如果key包含路径，需要对特殊字符进行编码
+    const encodedKeys = sourceKeys.map(key => encodeURIComponent(key));
+    const keysParam = encodedKeys.join('|');
     // 构建saveas参数：base64编码的bucket:key
     const saveas = qiniu.util.urlsafeBase64Encode(`${this.bucket}:${outputKey}`);
     // 完整的fops指令，包含saveas
