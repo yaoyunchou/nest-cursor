@@ -7,6 +7,7 @@ import { CreateReadingCheckinDto } from './dto/create-reading-checkin.dto';
 import { UpdateReadingCheckinDto } from './dto/update-reading-checkin.dto';
 import { QueryReadingCheckinDto } from './dto/query-reading-checkin.dto';
 import { ReadingTaskService } from './reading-task.service';
+import { FileService } from '../file/file.service';
 
 /**
  * 打卡记录服务
@@ -20,6 +21,7 @@ export class ReadingCheckinService {
     @InjectRepository(ReadingTask)
     private readonly readingTaskRepository: Repository<ReadingTask>,
     private readonly readingTaskService: ReadingTaskService,
+    private readonly fileService: FileService,
   ) {}
 
   /**
@@ -37,25 +39,28 @@ export class ReadingCheckinService {
       throw new NotFoundException(`任务ID ${taskId} 未找到`);
     }
     const checkInDate = new Date(createReadingCheckinDto.checkInDate);
+    checkInDate.setHours(0, 0, 0, 0);
     const taskStartDate = new Date(task.startDate);
+    taskStartDate.setHours(0, 0, 0, 0);
     const taskEndDate = new Date(task.endDate);
+    taskEndDate.setHours(0, 0, 0, 0);
     if (checkInDate < taskStartDate || checkInDate > taskEndDate) {
       throw new BadRequestException('打卡日期不在任务日期范围内');
     }
-    const existingCheckin = await this.readingCheckinRepository.findOne({
-      where: {
-        task: { id: taskId },
-        checkInDate,
-      },
-    });
-    if (existingCheckin) {
-      throw new BadRequestException('该日期已打卡');
+    let finalAudioUrl = createReadingCheckinDto.audioUrl;
+    if (createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 0) {
+      if (createReadingCheckinDto.audioUrlList.length === 1) {
+        finalAudioUrl = createReadingCheckinDto.audioUrlList[0];
+      } else {
+        const mergedFile = await this.fileService.mergeAudioByUrls(createReadingCheckinDto.audioUrlList, userId);
+        finalAudioUrl = mergedFile.url;
+      }
     }
     const checkin = this.readingCheckinRepository.create({
       task: { id: taskId } as any,
       user: { id: userId } as any,
       checkInDate,
-      audioUrl: createReadingCheckinDto.audioUrl,
+      audioUrl: finalAudioUrl,
       audioUrlList: createReadingCheckinDto.audioUrlList,
       duration: createReadingCheckinDto.duration,
     });
@@ -130,6 +135,14 @@ export class ReadingCheckinService {
     }
     if (updateReadingCheckinDto.audioUrlList !== undefined) {
       checkin.audioUrlList = updateReadingCheckinDto.audioUrlList;
+      if (updateReadingCheckinDto.audioUrlList.length > 0) {
+        if (updateReadingCheckinDto.audioUrlList.length === 1) {
+          checkin.audioUrl = updateReadingCheckinDto.audioUrlList[0];
+        } else {
+          const mergedFile = await this.fileService.mergeAudioByUrls(updateReadingCheckinDto.audioUrlList, userId);
+          checkin.audioUrl = mergedFile.url;
+        }
+      }
     }
     if (updateReadingCheckinDto.duration !== undefined) {
       checkin.duration = updateReadingCheckinDto.duration;

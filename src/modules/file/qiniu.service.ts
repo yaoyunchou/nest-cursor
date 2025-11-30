@@ -203,4 +203,23 @@ export class QiniuService {
       });
     });
   }
+
+  /**
+   * 检查文件是否存在
+   * @param key 文件key
+   * @returns 文件是否存在
+   */
+  async checkFileExists(key: string): Promise<boolean> {
+    const config = new qiniu.conf.Config();
+    const bucketManager = new qiniu.rs.BucketManager(this.mac, config);
+    return new Promise((resolve) => {
+      bucketManager.stat(this.bucket, key, (err, respBody, respInfo) => {
+        if (err || respInfo.statusCode !== 200) {
+          resolve(false);
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
 } 

@@ -1,5 +1,60 @@
 # 变更日志
 
+## 2025-01-23（晚上 - 修复数据库连接重置错误）
+
+### 优化数据库连接池配置
+
+1. **问题描述**
+   - 错误信息：`QueryFailedError: read ECONNRESET`
+   - 原因：数据库连接被重置，通常是由于连接超时、连接池配置不当或长时间空闲连接被数据库服务器关闭
+
+2. **修复内容**
+   - 文件：`src/app.module.ts`
+   - 在 TypeORM 配置中添加了 `extra` 选项，配置 MySQL 连接池参数：
+     - `connectionLimit: 10` - 连接池最大连接数
+     - `connectTimeout: 60000` - 连接超时时间（60秒）
+     - `acquireTimeout: 60000` - 获取连接超时时间（60秒）
+     - `timeout: 60000` - 查询超时时间（60秒）
+     - `reconnect: true` - 启用自动重连
+     - `idleTimeout: 300000` - 空闲连接超时时间（5分钟）
+     - `maxIdle: 10` - 最大空闲连接数
+     - `enableKeepAlive: true` - 启用保持连接活跃
+     - `keepAliveInitialDelay: 0` - 保持连接初始延迟
+
+3. **技术实现细节**
+   - 使用 `extra` 选项传递 MySQL2 连接池配置
+   - 这些配置会传递给底层的 mysql2 驱动
+   - 提高连接稳定性和自动恢复能力
+
+4. **影响范围**
+   - 提高数据库连接的稳定性
+   - 减少连接重置错误
+   - 自动处理连接超时和重连
+
+## 2025-01-23（晚上 - 移除读书打卡唯一性约束）
+
+### 允许同一日期多次打卡
+
+1. **功能变更**
+   - 移除了打卡记录的唯一性约束
+   - 允许同一任务在同一日期创建多条打卡记录
+
+2. **修改内容**
+   - **实体** (`src/modules/reading/entities/reading-checkin.entity.ts`)：
+     - 移除了 `@Unique(['task', 'checkInDate'])` 装饰器
+     - 移除了 `Unique` 的导入
+   - **服务** (`src/modules/reading/reading-checkin.service.ts`)：
+     - 移除了检查已存在打卡记录的逻辑
+     - 移除了唯一索引冲突的错误处理
+     - 简化了创建逻辑
+
+3. **注意事项**
+   - 如果数据库中已存在唯一索引，需要手动删除：
+     ```sql
+     ALTER TABLE reading_checkins DROP INDEX <索引名称>;
+     ```
+   - 如果 TypeORM 的 `synchronize` 为 `true`，重启应用后会自动同步数据库结构
+
 ## 2025-01-23（晚上 - 还原音频合并相关DTO文件）
 
 ### 还原被误删的DTO文件

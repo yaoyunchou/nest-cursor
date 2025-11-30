@@ -7,7 +7,6 @@ import {
   ManyToOne,
   JoinColumn,
   Index,
-  Unique,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { User } from '../../user/entities/user.entity';
@@ -18,7 +17,6 @@ import { ReadingTask } from './reading-task.entity';
  * 用于存储用户的读书打卡记录
  */
 @Entity('reading_checkins')
-@Unique(['task', 'checkInDate'])
 @Index(['task'])
 @Index(['user'])
 @Index(['checkInDate'])

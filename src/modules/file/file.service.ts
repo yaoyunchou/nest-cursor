@@ -190,15 +190,27 @@ export class FileService {
           }
           continue;
         } else {
-          // 处理失败
-          throw new Error(`音频合并失败: ${status.description || '未知错误'}`);
+          // 处理失败 (code === 2 或 3)
+          let errorMessage = status.description || '未知错误';
+          if (status.items && status.items.length > 0) {
+            const itemErrors = status.items
+              .filter((item: any) => item.code !== 0)
+              .map((item: any) => item.desc || item.error || '处理失败')
+              .join('; ');
+            if (itemErrors) {
+              errorMessage = `${errorMessage}。详细信息: ${itemErrors}`;
+            }
+          }
+          throw new Error(`音频合并失败: ${errorMessage}`);
         }
       } catch (error) {
         if (i === maxRetries - 1) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           throw new BadRequestException(`音频合并超时或失败: ${errorMessage}`);
         }
-        // 等待后重试
+        if (error instanceof Error && error.message.includes('音频合并失败')) {
+          throw error;
+        }
         await new Promise((resolve) => setTimeout(resolve, retryInterval));
       }
     }
@@ -244,6 +256,24 @@ export class FileService {
       }
       sourceKeys.push(key);
     }
+    // 验证所有key是否有效（非空且不包含特殊字符）
+    for (let i = 0; i < sourceKeys.length; i++) {
+      const key = sourceKeys[i];
+      if (!key || key.trim().length === 0) {
+        throw new BadRequestException(`第${i + 1}个URL提取的key为空: ${urls[i]}`);
+      }
+      if (key.includes('\n') || key.includes('\r')) {
+        throw new BadRequestException(`第${i + 1}个URL提取的key包含非法字符: ${key}`);
+      }
+    }
+    // 验证源文件是否存在（可选，如果文件不存在会导致合并失败）
+    for (let i = 0; i < sourceKeys.length; i++) {
+      const key = sourceKeys[i];
+      const exists = await this.qiniuService.checkFileExists(key);
+      if (!exists) {
+        throw new BadRequestException(`第${i + 1}个文件不存在于七牛云存储空间: ${key} (URL: ${urls[i]})`);
+      }
+    }
     // 生成合并后的文件名
     const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     const outputKey = `coze/merged/${Date.now()}-${random}.mp3`;
@@ -267,15 +297,27 @@ export class FileService {
           }
           continue;
         } else {
-          // 处理失败
-          throw new Error(`音频合并失败: ${status.description || '未知错误'}`);
+          // 处理失败 (code === 2 或 3)
+          let errorMessage = status.description || '未知错误';
+          if (status.items && status.items.length > 0) {
+            const itemErrors = status.items
+              .filter((item: any) => item.code !== 0)
+              .map((item: any) => item.desc || item.error || '处理失败')
+              .join('; ');
+            if (itemErrors) {
+              errorMessage = `${errorMessage}。详细信息: ${itemErrors}`;
+            }
+          }
+          throw new Error(`音频合并失败: ${errorMessage}`);
         }
       } catch (error) {
         if (i === maxRetries - 1) {
           const errorMessage = error instanceof Error ? error.message : String(error);
           throw new BadRequestException(`音频合并超时或失败: ${errorMessage}`);
         }
-        // 等待后重试
+        if (error instanceof Error && error.message.includes('音频合并失败')) {
+          throw error;
+        }
         await new Promise((resolve) => setTimeout(resolve, retryInterval));
       }
     }
