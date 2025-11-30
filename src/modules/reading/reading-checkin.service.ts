@@ -51,17 +51,12 @@ export class ReadingCheckinService {
     if (existingCheckin) {
       throw new BadRequestException('该日期已打卡');
     }
-    let finalAudioUrl: string | undefined;
-    if (createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 0) {
-      finalAudioUrl = JSON.stringify(createReadingCheckinDto.audioUrlList);
-    } else if (createReadingCheckinDto.audioUrl) {
-      finalAudioUrl = createReadingCheckinDto.audioUrl;
-    }
     const checkin = this.readingCheckinRepository.create({
       task: { id: taskId } as any,
       user: { id: userId } as any,
       checkInDate,
-      audioUrl: finalAudioUrl,
+      audioUrl: createReadingCheckinDto.audioUrl,
+      audioUrlList: createReadingCheckinDto.audioUrlList,
       duration: createReadingCheckinDto.duration,
     });
     const savedCheckin = await this.readingCheckinRepository.save(checkin);
@@ -130,10 +125,11 @@ export class ReadingCheckinService {
    */
   async update(id: number, updateReadingCheckinDto: UpdateReadingCheckinDto, userId: number): Promise<ReadingCheckin> {
     const checkin = await this.findOne(id, userId);
-    if (updateReadingCheckinDto.audioUrlList && updateReadingCheckinDto.audioUrlList.length > 0) {
-      checkin.audioUrl = JSON.stringify(updateReadingCheckinDto.audioUrlList);
-    } else if (updateReadingCheckinDto.audioUrl !== undefined) {
+    if (updateReadingCheckinDto.audioUrl !== undefined) {
       checkin.audioUrl = updateReadingCheckinDto.audioUrl;
+    }
+    if (updateReadingCheckinDto.audioUrlList !== undefined) {
+      checkin.audioUrlList = updateReadingCheckinDto.audioUrlList;
     }
     if (updateReadingCheckinDto.duration !== undefined) {
       checkin.duration = updateReadingCheckinDto.duration;

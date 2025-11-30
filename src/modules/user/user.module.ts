@@ -10,17 +10,20 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { UserSummaryService } from './user-summary.service';
 import { User } from './entities/user.entity';
 import { RoleModule } from '../role/role.module';
 import { Target } from '../target/entities/target.entity';
+import { Task } from '../target/entities/task.entity';
+import { ReadingCheckin } from '../reading/entities/reading-checkin.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Target]),
+    TypeOrmModule.forFeature([User, Target, Task, ReadingCheckin]),
     RoleModule,
   ],
   controllers: [UserController],
-  providers: [UserService],
-  exports: [UserService],
+  providers: [UserService, UserSummaryService],
+  exports: [UserService, UserSummaryService],
 })
 export class UserModule {} 

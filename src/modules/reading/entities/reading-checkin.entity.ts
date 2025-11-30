@@ -45,6 +45,10 @@ export class ReadingCheckin {
   @Column({ nullable: true })
   audioUrl: string;
 
+  @ApiProperty({ description: '录音文件URL列表（多段原始数据）', required: false, type: [String] })
+  @Column({ type: 'json', nullable: true })
+  audioUrlList: string[];
+
   @ApiProperty({ description: '录音时长（秒）', required: false })
   @Column({ type: 'int', nullable: true })
   duration: number;

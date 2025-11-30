@@ -32,6 +32,8 @@ import { PaginatedResponse } from '../../shared/interfaces/pagination.interface'
 import { Roles, UserRole } from '../auth/decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { Public } from '../auth/decorators/public.decorator';
+import { UserSummaryService } from './user-summary.service';
 
 /**
  * 用户管理
@@ -43,7 +45,10 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 @Controller('user')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userSummaryService: UserSummaryService,
+  ) {}
 
   @ApiOperation({ summary: '创建用户' })
   @ApiResponse({ 
@@ -142,5 +147,180 @@ export class UserController {
   @Put('reset/password')
   async resetPassword(@Request() req, @Query('id') id: number): Promise<void> {  
     return this.userService.resetPassword(req.user, id);
+  }
+
+  /**
+   * 用户首页汇总接口
+   * 返回用户首页所需的所有汇总数据，包括用户信息、各模块统计数据等
+   * @param req 请求对象，包含当前用户信息（可选）
+   * @returns 用户首页汇总数据
+   */
+  @Get('summary')
+  @Public()
+  @ApiOperation({ 
+    summary: '用户首页汇总', 
+    description: '返回用户首页所需的所有汇总数据。如果用户已登录则返回完整数据，如果未登录则返回 isAuth: false 和默认值' 
+  })
+  @ApiResponse({
+    status: 200,
+    description: '未登录用户响应',
+    schema: {
+      type: 'object',
+      properties: {
+        isAuth: {
+          type: 'boolean',
+          example: false,
+          description: '认证状态，false表示未登录',
+        },
+        goals: {
+          type: 'object',
+          properties: {
+            statistics: {
+              type: 'object',
+              properties: {
+                total: { type: 'number', example: 0 },
+                completed: { type: 'number', example: 0 },
+                inProgress: { type: 'number', example: 0 },
+                completion_rate: { type: 'number', example: 0 },
+              },
+            },
+            list: { type: 'array', items: { type: 'object' } },
+          },
+        },
+        tasks: {
+          type: 'object',
+          properties: {
+            todayCount: { type: 'number', example: 0 },
+          },
+        },
+        reading: {
+          type: 'object',
+          properties: {
+            todayCheckIns: { type: 'number', example: 0 },
+          },
+        },
+        errorbook: {
+          type: 'object',
+          properties: {
+            total: { type: 'number', example: 0 },
+            today: { type: 'number', example: 0 },
+          },
+        },
+        focus: {
+          type: 'object',
+          properties: {
+            today: { type: 'number', example: 0 },
+            month: { type: 'number', example: 0 },
+            total: { type: 'number', example: 0 },
+          },
+        },
+        habits: {
+          type: 'object',
+          properties: {
+            inProgress: { type: 'number', example: 0 },
+          },
+        },
+        period: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: '' },
+            nextDays: { type: 'number', example: 0 },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: '已登录用户响应',
+    schema: {
+      type: 'object',
+      properties: {
+        isAuth: {
+          type: 'boolean',
+          example: true,
+          description: '认证状态，true表示已登录',
+        },
+        user: {
+          type: 'object',
+          properties: {
+            username: { type: 'string', example: '用户名' },
+            avatar: { type: 'string', example: '头像URL' },
+          },
+        },
+        goals: {
+          type: 'object',
+          properties: {
+            statistics: {
+              type: 'object',
+              properties: {
+                total: { type: 'number', example: 10 },
+                completed: { type: 'number', example: 3 },
+                inProgress: { type: 'number', example: 5 },
+                completion_rate: { type: 'number', example: 30 },
+              },
+            },
+            list: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  id: { type: 'number' },
+                  name: { type: 'string' },
+                  status: { type: 'string' },
+                  plannedHours: { type: 'number' },
+                  progress: { type: 'number' },
+                  completionPercentage: { type: 'number' },
+                },
+              },
+            },
+          },
+        },
+        tasks: {
+          type: 'object',
+          properties: {
+            todayCount: { type: 'number', example: 5 },
+          },
+        },
+        reading: {
+          type: 'object',
+          properties: {
+            todayCheckIns: { type: 'number', example: 2 },
+          },
+        },
+        errorbook: {
+          type: 'object',
+          properties: {
+            total: { type: 'number', example: 0 },
+            today: { type: 'number', example: 0 },
+          },
+        },
+        focus: {
+          type: 'object',
+          properties: {
+            today: { type: 'number', example: 0 },
+            month: { type: 'number', example: 0 },
+            total: { type: 'number', example: 0 },
+          },
+        },
+        habits: {
+          type: 'object',
+          properties: {
+            inProgress: { type: 'number', example: 0 },
+          },
+        },
+        period: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: '' },
+            nextDays: { type: 'number', example: 0 },
+          },
+        },
+      },
+    },
+  })
+  async summary(@Request() req) {
+    const userId = req?.user?.userId ? parseInt(req.user.userId, 10) : undefined;
+    return await this.userSummaryService.getUserSummary(userId);
   }
 } 
