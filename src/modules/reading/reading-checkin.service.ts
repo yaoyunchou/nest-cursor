@@ -52,7 +52,7 @@ export class ReadingCheckinService {
       if (createReadingCheckinDto.audioUrlList.length === 1) {
         finalAudioUrl = createReadingCheckinDto.audioUrlList[0];
       } else {
-        const mergedFile = await this.fileService.mergeAudioByUrls(createReadingCheckinDto.audioUrlList, userId);
+        const mergedFile = await this.fileService.mergeAudioByUrls(createReadingCheckinDto.audioUrlList, userId, 'reading/merge');
         finalAudioUrl = mergedFile.url;
       }
     }
