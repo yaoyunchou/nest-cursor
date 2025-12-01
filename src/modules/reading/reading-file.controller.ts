@@ -44,14 +44,30 @@ export class ReadingFileController {
     }
     const allowedMimeTypes = ['audio/mpeg', 'audio/mp3', 'audio/aac', 'audio/wav', 'audio/x-wav'];
     const allowedExtensions = ['.mp3', '.aac', '.wav'];
-    const fileExtension = file.originalname.substring(file.originalname.lastIndexOf('.')).toLowerCase();
-    if (!allowedMimeTypes.includes(file.mimetype) && !allowedExtensions.includes(fileExtension)) {
+    // 扩展名到 mimetype 的映射表（以文件扩展名为准）
+    const extensionToMimeTypeMap: Record<string, string> = {
+      '.mp3': 'audio/mpeg',
+      '.aac': 'audio/aac',
+      '.wav': 'audio/wav',
+    };
+    // 提取文件扩展名
+    const lastDotIndex = file.originalname.lastIndexOf('.');
+    const fileExtension = lastDotIndex >= 0 
+      ? file.originalname.substring(lastDotIndex).toLowerCase() 
+      : '';
+    // 验证文件扩展名是否在允许列表中
+    if (!allowedExtensions.includes(fileExtension)) {
       throw new BadRequestException('不支持的文件格式，仅支持 mp3、aac、wav 格式');
     }
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
-      throw new BadRequestException('文件大小不能超过 10MB');
+    // 如果 mimetype 和扩展名不匹配，以扩展名为准，自动修正 mimetype
+    const expectedMimeType = extensionToMimeTypeMap[fileExtension];
+    if (file.mimetype !== expectedMimeType) {
+      file.mimetype = expectedMimeType;
     }
+    // const maxSize = 10 * 1024 * 1024;
+    // if (file.size > maxSize) {
+    //   throw new BadRequestException('文件大小不能超过 10MB');
+    // }
     const userId = req?.user?.userId ? parseInt(req.user.userId, 10) : undefined;
     if (userId === undefined) {
       throw new BadRequestException('用户ID不存在');

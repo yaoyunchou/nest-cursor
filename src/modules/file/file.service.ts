@@ -31,7 +31,12 @@ export class FileService {
   async upload(file: Express.Multer.File, userId: number, prefix: string = 'coze'): Promise<File> {
     // 生成唯一的文件名， 使用random
     const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const key = `${prefix}/${Date.now()}-${random}.${file.mimetype.split('/')[1]}`;
+    // 从原始文件名中提取扩展名（以文件扩展名为准，而不是 mimetype）
+    const lastDotIndex = file.originalname.lastIndexOf('.');
+    const fileExtension = lastDotIndex >= 0 
+      ? file.originalname.substring(lastDotIndex + 1).toLowerCase() 
+      : file.mimetype.split('/')[1] || 'bin'; // 如果没有扩展名，则从 mimetype 中提取，最后兜底使用 'bin'
+    const key = `${prefix}/${Date.now()}-${random}.${fileExtension}`;
     // 调用七牛云上传文件，进行上传
     const {url} = await this.qiniuService.uploadFile(file.buffer, key) ;
 
@@ -301,7 +306,7 @@ export class FileService {
     // 这里只使用第一个文件的格式作为输出格式
     // 生成合并后的文件名
     const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const outputKey = `${prefix}/merged/${Date.now()}-${random}.${format}`;
+    const outputKey = `${prefix}/${Date.now()}-${random}.${format}`;
     // 调用七牛云合并接口
     const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, format);
     // 轮询等待合并完成
