@@ -1,5 +1,281 @@
 # 变更日志
 
+## 2025-12-01
+
+### 目标汇总接口集成错题本统计
+
+1. **功能说明**
+   - 在目标汇总接口中集成错题本模块的统计信息
+   - 返回用户的总错题数和今日新增错题数
+
+2. **实现内容**
+   - 文件：`src/modules/target/target.service.ts`
+   - 文件：`src/modules/target/target.module.ts`
+   - 变更内容：
+     - 在 `TargetService` 中注入 `ErrorBookRepository`
+     - 在 `summary` 方法中查询错题本统计数据
+     - 在返回对象中添加 `errorbook` 字段，包含 `total` 和 `today` 两个统计值
+     - 更新 JSDoc 注释，说明新增的错题本统计字段
+     - 在 `TargetModule` 中导入 `ErrorBook` 实体
+
+3. **返回字段**
+   - `errorbook.total`: 总错题数
+   - `errorbook.today`: 今日新增错题数
+
+4. **技术实现细节**
+   - 使用并行查询（Promise.all）提高查询效率
+   - 使用查询构建器统计今日新增错题数（按创建日期筛选）
+   - 统计逻辑与错题本模块的统计方法保持一致
+
+5. **影响范围**
+   - 目标汇总接口现在包含错题本统计信息
+   - 前端可以在同一个接口中获取目标、任务和错题本的统计数据
+   - 提高了接口的完整性和数据聚合能力
+
+### 调整错题本创建DTO字段必填规则
+
+1. **功能说明**
+   - 调整创建错题本DTO的字段验证规则
+   - 只有图片字段为必填，其他字段均为选填
+
+2. **实现内容**
+   - 文件：`src/modules/errorbook/dto/create-errorbook.dto.ts`
+   - 文件：`src/modules/errorbook/entities/errorbook.entity.ts`
+   - 变更内容：
+     - 将 `images` 字段改为必填：添加 `@IsNotEmpty()` 和 `@ArrayMinSize(1)` 验证
+     - 将 `subject` 字段改为可选：移除 `@IsNotEmpty()`，添加 `@IsOptional()`
+     - 更新实体：将 `images` 字段的 `nullable` 改为 `false`，`subject` 字段的 `nullable` 改为 `true`
+     - 更新 API 文档注释，明确字段的必填/选填状态
+
+3. **字段验证规则**
+   - **images（图片）**：必填，至少需要上传一张图片，每个元素必须是有效的URL
+   - **subject（科目）**：选填
+   - **remark（备注）**：选填
+   - **grade（年级）**：选填
+   - **unit（单元）**：选填
+   - **aiAnalysis（AI分析）**：选填
+
+4. **影响范围**
+   - 创建错题时必须提供至少一张图片
+   - 其他字段可以根据需要选择性填写
+   - 提高了数据录入的灵活性
+
+### 错题本模块添加扩展字段
+
+1. **功能说明**
+   - 为错题本实体添加扩展字段，为后续功能扩展做准备
+   - 所有扩展字段均为可选，数据库中可以为空
+
+2. **新增字段**
+   - **grade（年级）**：字符串类型，最大长度50，可为空
+   - **unit（单元）**：字符串类型，最大长度100，可为空
+   - **aiAnalysis（AI分析结果）**：文本类型，可为空，用于存储AI分析的结果
+
+3. **实现内容**
+   - 文件：`src/modules/errorbook/entities/errorbook.entity.ts`
+   - 文件：`src/modules/errorbook/dto/create-errorbook.dto.ts`
+   - 文件：`src/modules/errorbook/dto/update-errorbook.dto.ts`
+   - 变更内容：
+     - 在实体中添加三个新字段，均设置为 `nullable: true`
+     - 在创建和更新DTO中添加对应的可选字段
+     - 添加字段验证和API文档注释
+
+4. **影响范围**
+   - 不影响现有功能，所有新字段均为可选
+   - 数据库同步时会自动添加新字段，现有数据不受影响
+   - API接口自动支持新字段，Swagger文档会自动更新
+
+### 创建错题本模块
+
+1. **模块概述**
+   - 实现了完整的错题本功能模块
+   - 支持错题记录的创建、查询、更新、删除
+   - 支持按科目筛选和分页查询
+   - 实现了错题统计功能（总错题数、今日新增错题数）
+
+2. **核心功能特点**
+   - **错题管理**：支持创建错题记录，包含拍照图片（多张）、科目、备注
+   - **图片支持**：支持多张图片URL存储（JSON数组格式）
+   - **科目分类**：支持按科目筛选错题
+   - **统计功能**：自动统计总错题数和今日新增错题数
+   - **权限控制**：用户只能查看和管理自己的错题
+
+3. **技术实现亮点**
+   - 使用TypeORM实现数据持久化
+   - 实现了错题和用户的多对一关联
+   - 支持分页查询和科目筛选
+   - 完整的JWT认证和权限控制
+   - 在用户汇总服务中集成错题本统计
+
+4. **数据模型设计**
+   - **ErrorBook实体**：错题本表，包含：
+     - id: 错题ID（主键）
+     - images: 拍照图片URL列表（JSON数组）
+     - subject: 科目（字符串，最大长度50）
+     - remark: 备注（文本，可选）
+     - user: 关联的用户（多对一关系）
+     - createdAt: 创建时间（自动生成）
+     - updatedAt: 更新时间（自动更新）
+
+5. **API接口设计**
+   - `POST /errorbook`：创建错题记录（需要JWT认证）
+   - `GET /errorbook`：获取错题列表（支持分页和科目筛选，需要JWT认证）
+   - `GET /errorbook/:id`：获取错题详情（需要JWT认证）
+   - `PUT /errorbook/:id`：更新错题记录（需要JWT认证）
+   - `DELETE /errorbook/:id`：删除错题记录（需要JWT认证）
+
+6. **用户汇总集成**
+   - 在 `UserSummaryService` 中实现了错题本统计功能
+   - 返回总错题数和今日新增错题数
+   - 集成到用户首页汇总接口中
+
+7. **文件结构**
+   - `src/modules/errorbook/entities/errorbook.entity.ts`：错题本实体
+   - `src/modules/errorbook/dto/`：数据传输对象
+     - `create-errorbook.dto.ts`：创建错题DTO
+     - `update-errorbook.dto.ts`：更新错题DTO
+     - `query-errorbook.dto.ts`：查询错题DTO
+   - `src/modules/errorbook/errorbook.service.ts`：错题本服务
+   - `src/modules/errorbook/errorbook.controller.ts`：错题本控制器
+   - `src/modules/errorbook/errorbook.module.ts`：错题本模块
+
+8. **在AppModule中注册模块**
+   - 文件：`src/app.module.ts`
+   - 添加了`ErrorBookModule`到imports数组
+
+9. **在UserModule中注册实体**
+   - 文件：`src/modules/user/user.module.ts`
+   - 添加了`ErrorBook`实体到TypeOrmModule.forFeature中
+   - 在`UserSummaryService`中实现了错题本统计功能
+
+## 2025-12-01
+
+### 调整目标汇总接口 user 信息位置
+
+1. **功能说明**
+   - 将 user 信息从目标对象中移到返回对象的最外层
+   - user 信息改为当前请求用户的信息，而不是目标的创建人信息
+   - 优化数据结构，避免在每个目标对象中重复用户信息
+
+2. **实现内容**
+   - 文件：`src/modules/target/target.service.ts`
+   - 变更内容：
+     - 在 `summary` 方法中查询当前请求用户信息
+     - 从目标对象中移除 user 字段
+     - 将 user 信息放在返回对象的最外层
+     - 更新 JSDoc 注释，说明 user 信息的位置和含义
+     - 优化查询，不再加载目标的 user 关联（因为已经查询了当前用户）
+
+3. **数据结构变更**
+   - 之前：每个目标对象包含 user 字段
+   - 现在：user 字段在最外层，所有目标共享同一个用户信息
+   - user 信息始终是当前请求用户的信息
+
+4. **影响范围**
+   - 返回数据结构更加清晰
+   - 减少数据冗余
+   - 提高查询效率（不再加载每个目标的 user 关联）
+
+### 为目标汇总接口添加详细的中文字段备注
+
+1. **功能说明**
+   - 为 `summary` 方法的返回字段添加详细的中文备注
+   - 提高代码可读性和可维护性
+   - 便于开发者理解每个字段的含义
+
+2. **实现内容**
+   - 文件：`src/modules/target/target.service.ts`
+   - 变更内容：
+     - 更新方法的 JSDoc 注释，详细说明返回对象的所有字段
+     - 为每个计算变量添加中文注释，说明其含义和计算方式
+     - 为返回对象中的每个字段添加中文注释
+     - 为用户信息对象中的每个字段添加中文注释
+
+3. **注释内容**
+   - 目标列表字段：id、name、description、status、plannedHours、progress、completionPercentage、startTime、endTime、completedTime、createdAt、updatedAt、user、tasks
+   - 用户信息字段：id、username、email、avatar、gender、phone、birth、address、addressText、status、remark、createdAt、updatedAt
+   - 汇总统计字段：totalTargets、totalTasks、totalPlannedTime、totalTaskCompletedTime、totalTime、totalTaskTime、completedTargetsPercentage、completionPercentage、completedTargets
+
+4. **影响范围**
+   - 提高代码可读性
+   - 便于新开发者理解代码逻辑
+   - 便于API文档生成和维护
+
+### 修复目标汇总接口 user 信息缺失问题
+
+1. **问题描述**
+   - 接口：`GET /target/user/mini/summary`
+   - 问题：返回的目标列表中，user 字段为空或缺失
+   - 原因：使用扩展运算符 `...target` 时，user 对象可能没有被正确包含在返回数据中
+
+2. **修复内容**
+   - 文件：`src/modules/target/target.service.ts`
+   - 变更内容：
+     - 显式构建 user 信息对象，只包含必要的用户字段
+     - 排除敏感信息（如密码）
+     - 确保 user 字段被正确包含在返回的每个目标对象中
+     - 包含的用户字段：id、username、email、avatar、gender、phone、birth、address、addressText、status、remark、createdAt、updatedAt
+
+3. **技术实现细节**
+   - 在构建 `targetSummaryItem` 时，显式提取 user 信息
+   - 使用条件判断确保 user 存在时才构建 userInfo
+   - 排除密码等敏感字段，提高安全性
+   - 保持数据结构清晰，便于前端使用
+
+4. **影响范围**
+   - 修复后，返回的目标列表会包含完整的用户信息
+   - 提高了数据完整性
+   - 便于前端展示用户相关信息
+
+### 修复目标汇总接口路由匹配问题
+
+1. **问题描述**
+   - 接口：`GET /target/user/summary`
+   - 错误：`Validation failed (numeric string is expected)`，返回400状态码
+   - 原因：路由顺序问题，`@Get(':id')` 路由在 `@Get('user/summary')` 之前，导致 `/target/user/summary` 被误匹配为 `:id` 路由，将 `user` 当作 `id` 参数进行数字验证
+
+2. **修复内容**
+   - 文件：`src/modules/target/target.controller.ts`
+   - 变更内容：
+     - 将 `@Get('user/summary')` 路由移到 `@Get(':id')` 路由之前
+     - 确保更具体的路由优先匹配，避免被动态路由捕获
+     - 移除了路由路径中的前导斜杠（NestJS 路由路径不需要前导斜杠）
+
+3. **技术实现细节**
+   - NestJS 路由匹配按照定义顺序进行
+   - 更具体的路由（如 `user/summary`）应该放在动态路由（如 `:id`）之前
+   - 这样可以确保正确的路由被匹配
+
+4. **影响范围**
+   - 修复后，`/target/user/summary` 接口可以正常访问
+   - 不会再出现参数验证错误
+   - 路由匹配逻辑更加清晰和正确
+
+### 修复 summary 接口返回 Infinity 导致400错误
+
+1. **问题描述**
+   - 接口：`GET /target/user/summary`
+   - 错误：返回400状态码
+   - 原因：当用户没有目标或目标规划时间为0时，计算百分比会出现除以0的情况，导致返回 `Infinity` 或 `NaN`，这些值在JSON序列化时可能导致400错误
+
+2. **修复内容**
+   - 文件：`src/modules/target/target.service.ts`
+   - 变更内容：
+     - 修复 `completedTargetsPercentage` 计算：当 `totalTargets` 为 0 时返回 0，避免除以0
+     - 修复 `completionPercentage` 计算：当 `totalTime` 为 0 时返回 0，避免除以0
+     - 修复单个目标的 `completionPercentage` 计算：当 `plannedHours` 为 0 时返回 0，避免除以0
+     - 添加空值保护：使用可选链和默认值处理 `target.tasks`、`task.time`、`target.plannedHours` 可能为 `null` 或 `undefined` 的情况
+
+3. **技术实现细节**
+   - 使用三元运算符检查除数是否为0
+   - 使用可选链操作符 `?.` 和空值合并操作符 `||` 处理空值
+   - 确保所有数值计算都有合理的默认值
+
+4. **影响范围**
+   - 修复后，即使用户没有目标或目标规划时间为0，接口也能正常返回
+   - 所有百分比字段都会返回有效的数值（0-100），不会出现 `Infinity` 或 `NaN`
+   - 提高了接口的健壮性和容错性
+
 ## 2025-01-23（晚上 - 修复文件上传 key 生成逻辑）
 
 ### 以文件扩展名为准生成七牛云文件 key

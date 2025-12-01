@@ -5,6 +5,7 @@ import { User } from './entities/user.entity';
 import { Target } from '../target/entities/target.entity';
 import { Task } from '../target/entities/task.entity';
 import { ReadingCheckin } from '../reading/entities/reading-checkin.entity';
+import { ErrorBook } from '../errorbook/entities/errorbook.entity';
 
 /**
  * 用户汇总服务
@@ -21,6 +22,8 @@ export class UserSummaryService {
     private readonly taskRepository: Repository<Task>,
     @InjectRepository(ReadingCheckin)
     private readonly readingCheckinRepository: Repository<ReadingCheckin>,
+    @InjectRepository(ErrorBook)
+    private readonly errorBookRepository: Repository<ErrorBook>,
   ) {}
 
   /**
@@ -111,10 +114,11 @@ export class UserSummaryService {
       };
     }
 
-    const [goals, tasks, readingCheckins] = await Promise.all([
+    const [goals, tasks, readingCheckins, errorbook] = await Promise.all([
       this.getGoalsSummary(userId),
       this.getTasksSummary(userId, today, tomorrow),
       this.getReadingSummary(userId, today, tomorrow),
+      this.getErrorBookSummary(userId, today),
     ]);
 
     return {
@@ -126,10 +130,7 @@ export class UserSummaryService {
       goals,
       tasks,
       reading: readingCheckins,
-      errorbook: {
-        total: 0,
-        today: 0,
-      },
+      errorbook,
       focus: {
         today: 0,
         month: 0,
@@ -209,6 +210,27 @@ export class UserSummaryService {
 
     return {
       todayCheckIns,
+    };
+  }
+
+  /**
+   * 获取错题本模块汇总数据
+   */
+  private async getErrorBookSummary(userId: number, today: Date) {
+    const [total, todayCount] = await Promise.all([
+      this.errorBookRepository.count({
+        where: { user: { id: userId } },
+      }),
+      this.errorBookRepository
+        .createQueryBuilder('errorbook')
+        .where('errorbook.user_id = :userId', { userId })
+        .andWhere('DATE(errorbook.createdAt) = DATE(:today)', { today })
+        .getCount(),
+    ]);
+
+    return {
+      total,
+      today: todayCount,
     };
   }
 }

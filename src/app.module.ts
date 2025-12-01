@@ -28,6 +28,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { Esp32Module } from './modules/esp32/esp32.module';
 import { NotificationTaskModule } from './modules/notification-task/notification-task.module';
 import { ReadingModule } from './modules/reading/reading.module';
+import { ErrorBookModule } from './modules/errorbook/errorbook.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { ReadingModule } from './modules/reading/reading.module';
     AiModule,
     NotificationTaskModule,
     ReadingModule,
+    ErrorBookModule,
   ],
   controllers: [HealthController],
 })

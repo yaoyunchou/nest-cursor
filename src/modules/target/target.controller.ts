@@ -51,46 +51,12 @@ export class TargetController {
   }
 
   /**
-   * 获取指定ID的目标
-   * @param id - 目标ID
-   * @returns 目标实体
-   */
-  @Get(':id')
-  @ApiOperation({ summary: '获取指定目标' })
-  findOne(@Param('id') id: string) {
-    return this.targetService.findOne(+id);
-  }
-  /**
-   *  删除目标  
-   *  希望能同时同步删除目标下的任务
-   * @param id - 目标ID
-   * @returns 删除结果
-   */
-  @Delete(':id')
-  @ApiOperation({ summary: '删除目标' })
-  delete(@Param('id') id: string) {
-    return this.targetService.delete(+id);
-  }
-
-  /**
-   * 修改目标信息
-   * @param id - 目标ID
-   * @param updateTargetDto - 更新目标数据
-   * @returns 更新后的目标实体
-   */
-  @Put(':id')
-  @ApiOperation({ summary: '修改目标信息' })
-  update(@Param('id') id: string, @Body() updateTargetDto: CreateTargetDto) {
-    return this.targetService.update(+id, updateTargetDto);
-  }
-
-  /**
    *  用户目标汇总
    * 通用接口：如果用户已登录则返回目标汇总，如果未登录则返回 isAuth: false
    * @param req - 请求对象，包含当前用户信息
    * @returns 用户目标汇总或认证状态
    */
-  @Get('/user/summary')
+  @Get('user/mini/summary')
   @Public()
   @ApiOperation({ summary: '用户目标汇总', description: '通用接口：如果用户已登录则返回目标汇总，如果未登录则返回 isAuth: false， 有用户信息则返回正常的用户目标汇总数据'})
   @ApiResponse({
@@ -201,5 +167,39 @@ export class TargetController {
       ...summaryData,
       isAuth: true,
     };
+  }
+
+  /**
+   * 获取指定ID的目标
+   * @param id - 目标ID
+   * @returns 目标实体
+   */
+  @Get(':id')
+  @ApiOperation({ summary: '获取指定目标' })
+  findOne(@Param('id') id: string) {
+    return this.targetService.findOne(+id);
+  }
+  /**
+   *  删除目标  
+   *  希望能同时同步删除目标下的任务
+   * @param id - 目标ID
+   * @returns 删除结果
+   */
+  @Delete(':id')
+  @ApiOperation({ summary: '删除目标' })
+  delete(@Param('id') id: string) {
+    return this.targetService.delete(+id);
+  }
+
+  /**
+   * 修改目标信息
+   * @param id - 目标ID
+   * @param updateTargetDto - 更新目标数据
+   * @returns 更新后的目标实体
+   */
+  @Put(':id')
+  @ApiOperation({ summary: '修改目标信息' })
+  update(@Param('id') id: string, @Body() updateTargetDto: CreateTargetDto) {
+    return this.targetService.update(+id, updateTargetDto);
   }
 } 

@@ -16,10 +16,11 @@ import { RoleModule } from '../role/role.module';
 import { Target } from '../target/entities/target.entity';
 import { Task } from '../target/entities/task.entity';
 import { ReadingCheckin } from '../reading/entities/reading-checkin.entity';
+import { ErrorBook } from '../errorbook/entities/errorbook.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Target, Task, ReadingCheckin]),
+    TypeOrmModule.forFeature([User, Target, Task, ReadingCheckin, ErrorBook]),
     RoleModule,
   ],
   controllers: [UserController],
