@@ -151,15 +151,19 @@ export class QiniuService {
     }
     const config = new qiniu.conf.Config();
     const operManager = new qiniu.fop.OperationManager(this.mac, config);
-    // 构建avconcat指令：对key进行URL编码，避免特殊字符被误识别
-    // 根据七牛云文档，avconcat指令格式：avconcat/2/format/mp3|key1|key2|key3
-    // 如果key包含路径，需要对特殊字符进行编码
-    const encodedKeys = sourceKeys.map(key => encodeURIComponent(key));
-    const keysParam = encodedKeys.join('|');
+    // 根据七牛云官方文档，avconcat指令格式：
+    // avconcat/2/format/mp3/kodo://bucket/key1的base64/kodo://bucket/key2的base64|saveas/输出key的base64
+    // 对于kodo资源，使用 kodo://bucket/key 格式，然后进行 urlsafe_base64_encode
+    const encodedUrls = sourceKeys.map(key => {
+      const kodoUrl = `kodo://${this.bucket}/${key}`;
+      return qiniu.util.urlsafeBase64Encode(kodoUrl);
+    });
+    // 使用 / 分隔符连接编码后的URL
+    const keysParam = encodedUrls.join('/');
     // 构建saveas参数：base64编码的bucket:key
     const saveas = qiniu.util.urlsafeBase64Encode(`${this.bucket}:${outputKey}`);
-    // 完整的fops指令，包含saveas
-    const fops = `avconcat/2/format/${format}|${keysParam}|saveas/${saveas}`;
+    // 完整的fops指令，使用 | 分隔 saveas 参数
+    const fops = `avconcat/2/format/${format}/${keysParam}|saveas/${saveas}`;
     const pipeline = ''; // 使用默认队列
     const options: qiniu.fop.PfopOptions = {}; // 不设置回调URL和其他选项
     return new Promise((resolve, reject) => {

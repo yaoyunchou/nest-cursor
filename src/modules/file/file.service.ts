@@ -28,10 +28,10 @@ export class FileService {
    * @param userId - 上传用户ID
    * @returns 保存的文件实体
    */
-  async upload(file: Express.Multer.File, userId: number): Promise<File> {
+  async upload(file: Express.Multer.File, userId: number, prefix: string = 'coze'): Promise<File> {
     // 生成唯一的文件名， 使用random
     const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const key = `coze/${Date.now()}-${random}.${file.mimetype.split('/')[1]}`;
+    const key = `${prefix}/${Date.now()}-${random}.${file.mimetype.split('/')[1]}`;
     // 调用七牛云上传文件，进行上传
     const {url} = await this.qiniuService.uploadFile(file.buffer, key) ;
 
@@ -239,7 +239,7 @@ export class FileService {
    * @param userId - 用户ID
    * @returns 合并后的文件实体
    */
-  async mergeAudioByUrls(urls: string[], userId: number): Promise<File> {
+  async mergeAudioByUrls(urls: string[], userId: number, prefix: string = 'coze'): Promise<File> {
     // 验证URL数量
     if (!urls || urls.length < 2) {
       throw new BadRequestException('至少需要2个音频文件URL');
@@ -274,11 +274,36 @@ export class FileService {
         throw new BadRequestException(`第${i + 1}个文件不存在于七牛云存储空间: ${key} (URL: ${urls[i]})`);
       }
     }
+    // 从第一个文件的URL中提取文件格式
+    const getFileFormat = (urlOrKey: string): string => {
+      // 尝试从URL或key中提取扩展名
+      const match = urlOrKey.match(/\.([a-zA-Z0-9]+)(?:\?|#|$)/);
+      if (match && match[1]) {
+        const ext = match[1].toLowerCase();
+        // 将常见音频格式映射为标准格式
+        const formatMap: Record<string, string> = {
+          mp3: 'mp3',
+          mpeg: 'mpeg',
+          mp4: 'mp4',
+          m4a: 'm4a',
+          aac: 'aac',
+          wav: 'wav',
+          flac: 'flac',
+          ogg: 'ogg',
+        };
+        return formatMap[ext] || ext;
+      }
+      // 默认返回 mp3
+      return 'mp3';
+    };
+    const format = getFileFormat(sourceKeys[0] || urls[0]);
+    // 验证所有文件的格式是否一致（可选，七牛云可能支持混合格式）
+    // 这里只使用第一个文件的格式作为输出格式
     // 生成合并后的文件名
     const random = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const outputKey = `coze/merged/${Date.now()}-${random}.mpeg`;
+    const outputKey = `${prefix}/merged/${Date.now()}-${random}.${format}`;
     // 调用七牛云合并接口
-    const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, 'mpeg');
+    const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, format);
     // 轮询等待合并完成
     let mergedUrl: string | null = null;
     const maxRetries = 30; // 最多重试30次
@@ -324,12 +349,27 @@ export class FileService {
     if (!mergedUrl) {
       throw new BadRequestException('音频合并超时，请稍后重试');
     }
+    // 根据格式确定 MIME 类型
+    const getMimeType = (fileFormat: string): string => {
+      const mimeMap: Record<string, string> = {
+        mp3: 'audio/mpeg',
+        mpeg: 'audio/mpeg',
+        mp4: 'audio/mp4',
+        m4a: 'audio/mp4',
+        aac: 'audio/aac',
+        wav: 'audio/wav',
+        flac: 'audio/flac',
+        ogg: 'audio/ogg',
+      };
+      return mimeMap[fileFormat] || 'audio/mpeg';
+    };
+    const mimeType = getMimeType(format);
     // 创建合并后的文件实体（大小设为0，因为无法准确计算）
     const mergedFileEntity = this.fileRepository.create({
-      filename: `merged-${Date.now()}.mp3`,
-      originalname: `merged-audio-${Date.now()}.mp3`,
+      filename: `merged-${Date.now()}.${format}`,
+      originalname: `merged-audio-${Date.now()}.${format}`,
       size: 0, // 无法准确计算合并后的大小
-      mimetype: 'audio/mpeg',
+      mimetype: mimeType,
       url: mergedUrl,
       key: outputKey,
       userId,

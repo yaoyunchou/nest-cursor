@@ -56,7 +56,7 @@ export class ReadingFileController {
     if (userId === undefined) {
       throw new BadRequestException('用户ID不存在');
     }
-    const fileEntity = await this.fileService.upload(file, userId);
+    const fileEntity = await this.fileService.upload(file, userId, 'reading/audio');
     return {
       url: fileEntity.url,
     };
