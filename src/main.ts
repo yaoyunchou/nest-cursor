@@ -9,7 +9,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { LoggerMiddleware } from './core/middleware/logger.middleware';
 import { TransformInterceptor } from './core/interceptors/transform.interceptor';
 import { JwtExceptionFilter } from './core/filters/jwt-exception.filter';
@@ -21,6 +21,18 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   
   app.setGlobalPrefix('api/v1');
+  
+  // 配置全局验证管道
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
   
   app.useGlobalInterceptors(new TransformInterceptor());
 

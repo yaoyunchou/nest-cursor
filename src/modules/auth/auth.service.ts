@@ -125,16 +125,21 @@ export class AuthService {
       const response = await fetch(url);
       const data = await response.json();
       const { openid, errmsg, errcode, session_key  } = data;
-
       if (errcode) {
-        throw new HttpException(`微信登录失败: ${errmsg}`, HttpStatus.UNAUTHORIZED);
+        // throw new HttpException(`微信登录失败: ${errmsg}`, HttpStatus.UNAUTHORIZED);
+        console.error(`微信登录失败: ${errmsg}`);
       }
-
+      if(!openid) {
+        return {
+          message: '微信授权失败，重新点击授权！',
+          data: null,
+        };
+      }
       // 查找
       let user = await this.userService.findByOpenid(openid);
-
       if (!user) {
-         user = await this.userService.create({
+        // 创建新用户
+        user = await this.userService.create({
           openid,
           username: username || `wx_${openid.slice(-8)}`, // 生成一个默认用户名
           avatar: avatar || '',
@@ -145,17 +150,7 @@ export class AuthService {
           addressText: '',
           birth: '',
         });
-        // 创建新用户
-        if (!phone) {
-          // 这里不能当错误执行， 这个场景对应第一个功能， 返回对应的信息即可
-          return {
-            message: '用户没有注册',
-            data: null,
-          };
-        }
-       
-      } 
-
+      }
       // 生成JWT token，  这里多存入openid 和 session_key会有影响吗
       
       const payload = { 

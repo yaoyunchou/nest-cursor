@@ -8,6 +8,7 @@
  */
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsEmail, IsOptional, MinLength, IsArray, IsNumber } from 'class-validator';
+import { IsNumberArray } from '../validators/is-number-array.validator';
 
 export class CreateUserDto {
   @ApiProperty({ description: '用户名' })
@@ -30,9 +31,9 @@ export class CreateUserDto {
   @IsOptional()
   avatar?: string;
 
-  @ApiProperty({ description: '地址', required: false })
-  @IsArray()
+  @ApiProperty({ description: '地址', required: false, type: [Number] })
   @IsOptional()
+  @IsNumberArray({ message: '地址必须是数字数组，不能是字符串' })
   address?: number[];
 
   
