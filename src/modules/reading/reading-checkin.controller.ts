@@ -18,6 +18,7 @@ import { CreateReadingCheckinDto } from './dto/create-reading-checkin.dto';
 import { UpdateReadingCheckinDto } from './dto/update-reading-checkin.dto';
 import { QueryReadingCheckinDto } from './dto/query-reading-checkin.dto';
 import { ReadingCheckin } from './entities/reading-checkin.entity';
+import { RoleCode } from '../role/entities/role.entity';
 
 /**
  * 打卡记录控制器
@@ -59,7 +60,17 @@ export class ReadingCheckinController {
     if (userId === undefined) {
       throw new Error('用户ID不存在');
     }
-    return this.readingCheckinService.findAll(query, userId);
+    const roles = req?.user?.roles || [];
+    const isAdmin = roles.some((role: any) => {
+      if (typeof role === 'string') {
+        return role.toLowerCase() === RoleCode.ADMIN;
+      }
+      if (typeof role === 'object' && role.code) {
+        return role.code.toLowerCase() === RoleCode.ADMIN;
+      }
+      return false;
+    });
+    return this.readingCheckinService.findAll(query, userId, isAdmin);
   }
 
   /**
@@ -75,7 +86,17 @@ export class ReadingCheckinController {
     if (userId === undefined) {
       throw new Error('用户ID不存在');
     }
-    return this.readingCheckinService.findOne(id, userId);
+    const roles = req?.user?.roles || [];
+    const isAdmin = roles.some((role: any) => {
+      if (typeof role === 'string') {
+        return role.toLowerCase() === RoleCode.ADMIN;
+      }
+      if (typeof role === 'object' && role.code) {
+        return role.code.toLowerCase() === RoleCode.ADMIN;
+      }
+      return false;
+    });
+    return this.readingCheckinService.findOne(id, userId, isAdmin);
   }
 
   /**

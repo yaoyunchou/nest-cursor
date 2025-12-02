@@ -19,6 +19,7 @@ import { UpdateReadingTaskDto } from './dto/update-reading-task.dto';
 import { QueryReadingTaskDto } from './dto/query-reading-task.dto';
 import { ReadingTask } from './entities/reading-task.entity';
 import { ListResponse } from '@/models/list-response.model';
+import { RoleCode } from '../role/entities/role.entity';
 
 /**
  * 读书任务控制器
@@ -60,7 +61,17 @@ export class ReadingTaskController {
     if (userId === undefined) {
       throw new Error('用户ID不存在');
     }
-    return this.readingTaskService.findAll(query, userId);
+    const roles = req?.user?.roles || [];
+    const isAdmin = roles.some((role: any) => {
+      if (typeof role === 'string') {
+        return role.toLowerCase() === RoleCode.ADMIN;
+      }
+      if (typeof role === 'object' && role.code) {
+        return role.code.toLowerCase() === RoleCode.ADMIN;
+      }
+      return false;
+    });
+    return this.readingTaskService.findAll(query, userId, isAdmin);
   }
 
   /**
@@ -76,7 +87,17 @@ export class ReadingTaskController {
     if (userId === undefined) {
       throw new Error('用户ID不存在');
     }
-    return this.readingTaskService.findOne(id, userId);
+    const roles = req?.user?.roles || [];
+    const isAdmin = roles.some((role: any) => {
+      if (typeof role === 'string') {
+        return role.toLowerCase() === RoleCode.ADMIN;
+      }
+      if (typeof role === 'object' && role.code) {
+        return role.code.toLowerCase() === RoleCode.ADMIN;
+      }
+      return false;
+    });
+    return this.readingTaskService.findOne(id, userId, isAdmin);
   }
 
   /**

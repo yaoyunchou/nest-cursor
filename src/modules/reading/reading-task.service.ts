@@ -84,13 +84,15 @@ export class ReadingTaskService {
    * 获取任务列表
    * @param query 查询参数
    * @param userId 用户ID
+   * @param isAdmin 是否为管理员，管理员可以查看所有数据
    * @returns 任务列表
    */
-  async findAll(query: QueryReadingTaskDto, userId: number): Promise<ListResponse<ReadingTask>> {
+  async findAll(query: QueryReadingTaskDto, userId: number, isAdmin: boolean = false): Promise<ListResponse<ReadingTask>> {
     const { page = 1, pageSize = 10, status } = query;
-    const where: FindOptionsWhere<ReadingTask> = {
-      user: { id: userId },
-    };
+    const where: FindOptionsWhere<ReadingTask> = {};
+    if (!isAdmin) {
+      where.user = { id: userId };
+    }
     if (status) {
       where.status = status;
     }
@@ -114,11 +116,16 @@ export class ReadingTaskService {
    * 获取任务详情
    * @param id 任务ID
    * @param userId 用户ID
+   * @param isAdmin 是否为管理员，管理员可以查看所有数据
    * @returns 任务详情
    */
-  async findOne(id: number, userId: number): Promise<ReadingTask> {
+  async findOne(id: number, userId: number, isAdmin: boolean = false): Promise<ReadingTask> {
+    const where: FindOptionsWhere<ReadingTask> = { id };
+    if (!isAdmin) {
+      where.user = { id: userId };
+    }
     const task = await this.readingTaskRepository.findOne({
-      where: { id, user: { id: userId } },
+      where,
       relations: ['checkins'],
     });
     if (!task) {

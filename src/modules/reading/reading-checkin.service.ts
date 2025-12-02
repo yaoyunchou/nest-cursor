@@ -74,13 +74,15 @@ export class ReadingCheckinService {
    * 获取打卡记录列表
    * @param query 查询参数
    * @param userId 用户ID
+   * @param isAdmin 是否为管理员，管理员可以查看所有数据
    * @returns 打卡记录列表
    */
-  async findAll(query: QueryReadingCheckinDto, userId: number): Promise<ReadingCheckin[]> {
+  async findAll(query: QueryReadingCheckinDto, userId: number, isAdmin: boolean = false): Promise<ReadingCheckin[]> {
     const { taskId, year, month, page = 1, pageSize = 10 } = query;
-    const where: FindOptionsWhere<ReadingCheckin> = {
-      user: { id: userId },
-    };
+    const where: FindOptionsWhere<ReadingCheckin> = {};
+    if (!isAdmin) {
+      where.user = { id: userId };
+    }
     if (taskId) {
       where.task = { id: taskId } as any;
     }
@@ -109,11 +111,16 @@ export class ReadingCheckinService {
    * 获取打卡记录详情
    * @param id 打卡记录ID
    * @param userId 用户ID
+   * @param isAdmin 是否为管理员，管理员可以查看所有数据
    * @returns 打卡记录详情
    */
-  async findOne(id: number, userId: number): Promise<ReadingCheckin> {
+  async findOne(id: number, userId: number, isAdmin: boolean = false): Promise<ReadingCheckin> {
+    const where: FindOptionsWhere<ReadingCheckin> = { id };
+    if (!isAdmin) {
+      where.user = { id: userId };
+    }
     const checkin = await this.readingCheckinRepository.findOne({
-      where: { id, user: { id: userId } },
+      where,
       relations: ['task'],
     });
     if (!checkin) {
