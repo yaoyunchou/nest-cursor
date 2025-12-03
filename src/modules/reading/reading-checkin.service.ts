@@ -36,7 +36,7 @@ export class ReadingCheckinService {
       where: { id: taskId, user: { id: userId } },
     });
     if (!task) {
-      throw new NotFoundException(`任务ID ${taskId} 未找到`);
+      throw new NotFoundException(`对应用户${userId}的任务ID ${taskId} 未找到`);
     }
     const checkInDate = new Date(createReadingCheckinDto.checkInDate);
     checkInDate.setHours(0, 0, 0, 0);

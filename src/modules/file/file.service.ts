@@ -23,6 +23,30 @@ export class FileService {
   ) {}
 
   /**
+   * 检查状态是否表示正在执行中
+   * @param status - 七牛云返回的状态对象
+   * @returns 是否正在执行中
+   */
+  private isStatusExecuting(status: any): boolean {
+    // 检查描述信息中是否包含"执行中"相关的关键词
+    const executingKeywords = ['executing', 'processing', '正在执行', '处理中'];
+    const description = (status.description || '').toLowerCase();
+    if (executingKeywords.some(keyword => description.includes(keyword.toLowerCase()))) {
+      return true;
+    }
+    // 检查 items 中的描述
+    if (status.items && Array.isArray(status.items)) {
+      for (const item of status.items) {
+        const itemDesc = ((item.desc || item.error || '') + '').toLowerCase();
+        if (executingKeywords.some(keyword => itemDesc.includes(keyword.toLowerCase()))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * 上传文件到七牛云并保存文件信息
    * @param file - 上传的文件对象
    * @param userId - 上传用户ID
@@ -179,8 +203,8 @@ export class FileService {
     const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, 'mp3');
     // 轮询等待合并完成
     let mergedUrl: string | null = null;
-    const maxRetries = 30; // 最多重试30次
-    const retryInterval = 2000; // 每次间隔2秒
+    const maxRetries = 60; // 最多重试60次（大文件可能需要更长时间）
+    const retryInterval = 3000; // 每次间隔3秒（增加等待时间）
     for (let i = 0; i < maxRetries; i++) {
       try {
         const status = await this.qiniuService.getPersistentStatus(persistentId);
@@ -195,6 +219,15 @@ export class FileService {
           }
           continue;
         } else {
+          // 检查是否是"正在执行"的状态（不应该当作失败）
+          const isExecuting = this.isStatusExecuting(status);
+          if (isExecuting) {
+            // 如果状态显示正在执行，继续等待
+            if (i < maxRetries - 1) {
+              await new Promise((resolve) => setTimeout(resolve, retryInterval));
+            }
+            continue;
+          }
           // 处理失败 (code === 2 或 3)
           let errorMessage = status.description || '未知错误';
           if (status.items && status.items.length > 0) {
@@ -311,8 +344,8 @@ export class FileService {
     const persistentId = await this.qiniuService.concatAudio(sourceKeys, outputKey, format);
     // 轮询等待合并完成
     let mergedUrl: string | null = null;
-    const maxRetries = 30; // 最多重试30次
-    const retryInterval = 2000; // 每次间隔2秒
+    const maxRetries = 60; // 最多重试60次（大文件可能需要更长时间）
+    const retryInterval = 3000; // 每次间隔3秒（增加等待时间）
     for (let i = 0; i < maxRetries; i++) {
       try {
         const status = await this.qiniuService.getPersistentStatus(persistentId);
@@ -327,6 +360,15 @@ export class FileService {
           }
           continue;
         } else {
+          // 检查是否是"正在执行"的状态（不应该当作失败）
+          const isExecuting = this.isStatusExecuting(status);
+          if (isExecuting) {
+            // 如果状态显示正在执行，继续等待
+            if (i < maxRetries - 1) {
+              await new Promise((resolve) => setTimeout(resolve, retryInterval));
+            }
+            continue;
+          }
           // 处理失败 (code === 2 或 3)
           let errorMessage = status.description || '未知错误';
           if (status.items && status.items.length > 0) {
