@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere, Between } from 'typeorm';
 import { ReadingCheckin } from './entities/reading-checkin.entity';
@@ -15,6 +15,7 @@ import { FileService } from '../file/file.service';
  */
 @Injectable()
 export class ReadingCheckinService {
+  private readonly logger = new Logger(ReadingCheckinService.name);
   constructor(
     @InjectRepository(ReadingCheckin)
     private readonly readingCheckinRepository: Repository<ReadingCheckin>,
@@ -47,25 +48,27 @@ export class ReadingCheckinService {
     if (checkInDate < taskStartDate || checkInDate > taskEndDate) {
       throw new BadRequestException('打卡日期不在任务日期范围内');
     }
-    let finalAudioUrl  = createReadingCheckinDto.audioUrl;
-    if (createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 0) {
-      if (createReadingCheckinDto.audioUrlList.length === 1) {
-        finalAudioUrl = createReadingCheckinDto.audioUrlList[0];
-      } else {
-        const mergedFile = await this.fileService.mergeAudioByUrls(createReadingCheckinDto.audioUrlList, userId, 'reading/merge');
-        finalAudioUrl = mergedFile.url;
-      }
+    // 确定初始audioUrl：优先使用audioUrl，否则使用audioUrlList的第一个
+    let initialAudioUrl = createReadingCheckinDto.audioUrl;
+    if (!initialAudioUrl && createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 0) {
+      initialAudioUrl = createReadingCheckinDto.audioUrlList[0];
     }
-  
+    // 创建打卡记录（先保存，不等待合并）
     const checkin = this.readingCheckinRepository.create({
       task: { id: taskId } as any,
       user: { id: userId } as any,
       checkInDate,
-      audioUrl: finalAudioUrl,
+      audioUrl: initialAudioUrl,
       audioUrlList: createReadingCheckinDto.audioUrlList,
       duration: createReadingCheckinDto.duration,
     });
     const savedCheckin = await this.readingCheckinRepository.save(checkin);
+    // 如果有多个音频文件需要合并，异步执行合并任务
+    if (createReadingCheckinDto.audioUrlList && createReadingCheckinDto.audioUrlList.length > 1) {
+      this.mergeAudioAsync(savedCheckin.id, createReadingCheckinDto.audioUrlList, userId).catch((error) => {
+        this.logger.error(`打卡记录 ${savedCheckin.id} 音频合并失败:`, error);
+      });
+    }
     await this.readingTaskService.updateCompletedCheckIns(taskId);
     return savedCheckin;
   }
@@ -147,8 +150,14 @@ export class ReadingCheckinService {
         if (updateReadingCheckinDto.audioUrlList.length === 1) {
           checkin.audioUrl = updateReadingCheckinDto.audioUrlList[0];
         } else {
-          const mergedFile = await this.fileService.mergeAudioByUrls(updateReadingCheckinDto.audioUrlList, userId);
-          checkin.audioUrl = mergedFile.url;
+          // 多个文件时，先使用第一个URL，然后异步合并
+          checkin.audioUrl = updateReadingCheckinDto.audioUrlList[0];
+          const savedCheckin = await this.readingCheckinRepository.save(checkin);
+          // 异步执行合并任务
+          this.mergeAudioAsync(savedCheckin.id, updateReadingCheckinDto.audioUrlList, userId).catch((error) => {
+            this.logger.error(`打卡记录 ${savedCheckin.id} 音频合并失败:`, error);
+          });
+          return savedCheckin;
         }
       }
     }
@@ -156,6 +165,39 @@ export class ReadingCheckinService {
       checkin.duration = updateReadingCheckinDto.duration;
     }
     return await this.readingCheckinRepository.save(checkin);
+  }
+
+  /**
+   * 异步合并音频文件并更新打卡记录
+   * @param checkinId 打卡记录ID
+   * @param audioUrlList 音频URL列表
+   * @param userId 用户ID
+   */
+  private async mergeAudioAsync(checkinId: number, audioUrlList: string[], userId: number): Promise<void> {
+    const maxRetries = 3; // 最多重试3次
+    const retryInterval = 5 * 60 * 1000; // 5分钟（毫秒）
+    let lastError: Error | null = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        this.logger.log(`打卡记录 ${checkinId} 开始第 ${attempt} 次音频合并尝试`);
+        const mergedFile = await this.fileService.mergeAudioByUrls(audioUrlList, userId, 'reading/merge');
+        await this.readingCheckinRepository.update(checkinId, {
+          audioUrl: mergedFile.url,
+        });
+        this.logger.log(`打卡记录 ${checkinId} 音频合并完成（第 ${attempt} 次尝试），已更新audioUrl`);
+        return; // 成功则退出
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error(String(error));
+        this.logger.warn(`打卡记录 ${checkinId} 第 ${attempt} 次音频合并失败:`, lastError.message);
+        // 如果不是最后一次尝试，等待后重试
+        if (attempt < maxRetries) {
+          this.logger.log(`打卡记录 ${checkinId} 将在 ${retryInterval / 1000 / 60} 分钟后进行第 ${attempt + 1} 次重试`);
+          await new Promise((resolve) => setTimeout(resolve, retryInterval));
+        }
+      }
+    }
+    // 所有重试都失败，记录错误但不抛出异常（避免影响主流程）
+    this.logger.error(`打卡记录 ${checkinId} 音频合并失败，已重试 ${maxRetries} 次:`, lastError);
   }
 
   /**
