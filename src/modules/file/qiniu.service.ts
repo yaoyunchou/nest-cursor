@@ -153,8 +153,8 @@ export class QiniuService {
     const operManager = new qiniu.fop.OperationManager(this.mac, config);
     // 根据七牛云官方文档，avconcat指令格式：
     // avconcat/2/format/mp3/kodo://bucket/key1的base64/kodo://bucket/key2的base64|saveas/输出key的base64
-    // 对于kodo资源，使用 kodo://bucket/key 格式，然后进行 urlsafe_base64_encode
-    const encodedUrls = sourceKeys.map(key => {
+    // 对于kodo资源，使用 kodo://bucket/key 格式，然后进行 urlsafe_base64_encode,  key需要是一个已经有的文件， 后面再进行拼接， 所以需要从第二个文件开始拼接
+    const encodedUrls = sourceKeys.slice(1).map(key => {
       const kodoUrl = `kodo://${this.bucket}/${key}`;
       return qiniu.util.urlsafeBase64Encode(kodoUrl);
     });
